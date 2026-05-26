@@ -54,6 +54,15 @@ class Timer:
 
         return self._elapsed + (time.time() - self._start_time)
 
+    def elapsed_hms(self):
+        total_seconds = int(self.elapsed())
+    
+        hh = total_seconds // 3600
+        mm = (total_seconds % 3600) // 60
+        ss = total_seconds % 60
+    
+        return hh, mm, ss
+
     def is_running(self):
         return self._running
 

@@ -1,3 +1,4 @@
+
 class Widget:
     def __init__(self, name:str, x:int, y:int, w:int, h:int, value=None):
         self.widgets: list = []
@@ -21,11 +22,11 @@ class Widget:
             self.dirty = True
 
     def render(self, display):
-        print(f"rendering widget: {self.name}")
+        # print(f"rendering widget: {self.name}")
 
         for widget in self.widgets:
             if widget.dirty:
-                print(f"rendering widget: {widget.name}")
+                # print(f"rendering widget: {widget.name}")
                 widget.render(display)
         
         self.dirty = False
@@ -119,6 +120,10 @@ class TimerWidget(Widget):
     def __init__(self, name, x, y, w, h, value=None):
         super().__init__(name, x, y, w, h, value)
         self.values: tuple = (0,0,0)
+
+        self._current_hh = 0
+        self._current_mm = 0
+        self._current_ss = 0
         
         FONT_SIZE = 8
         text_width_pxl = len(name) * FONT_SIZE
@@ -171,6 +176,26 @@ class TimerWidget(Widget):
             self.ss_widget,
         ]
 
+    def update(self, values):
+        if len(values) == 3:
+            h, m, s = values
+
+            if h != self._current_hh:
+                self.hh_widget.text = f"{h:02d}:"
+                self.hh_widget.dirty = True
+                self._current_hh = h
+
+            if m != self._current_mm:
+                self.mm_widget.text = f"{m:02d}:"
+                self.mm_widget.dirty = True
+                self._current_mm = m
+
+            if s != self._current_ss:
+                self.ss_widget.text = f"{s:02d}"
+                self.ss_widget.dirty = True
+                self._current_ss = s
+
+        self.dirty = True
         
 class CoordinateWidget(Widget):
     def __init__(self, name, x, y, w, h, value=None):
@@ -243,6 +268,14 @@ class SpeedWidget(Widget):
             self.value_widget,
             self.units_widget
         ]
+
+    def update(self, values):
+        super().update(values)
+        self.value_widget.text = f"{values[0]:.2f}" if values and len(values) > 0 else f"0.00"
+        self.value_widget.dirty = True
+        self.dirty = True
+        
+
 
 class SlopeWidget(Widget):
     def __init__(self, name, x, y, w, h, value=None):
