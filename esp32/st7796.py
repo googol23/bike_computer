@@ -1,6 +1,6 @@
 import re
-
-from machine import Pin, SPI
+import config
+from machine import Pin, SPI, PWM
 import time
 
 import framebuf
@@ -16,13 +16,13 @@ class ST7796Display:
         self,
         width,
         height,
-        pin_cs=15,
-        pin_rst=4,
-        pin_dc=2,
-        pin_mosi=23,
-        pin_sck=18,
-        pin_miso=19,
-        pin_led=32,
+        pin_cs=config.DISPLAY_PIN_CS,
+        pin_rst=config.DISPLAY_PIN_RST,
+        pin_dc=config.DISPLAY_PIN_DC,
+        pin_mosi=config.DISPLAY_PIN_MOSI,
+        pin_sck=config.DISPLAY_PIN_SCK,
+        pin_miso=config.DISPLAY_PIN_MISO,
+        pin_led=config.DISPLAY_PIN_LED,
         spi_id=2,
         baudrate=40_000_000,
     ):
@@ -36,7 +36,8 @@ class ST7796Display:
         self.dc = Pin(pin_dc, Pin.OUT, value=1)
         self.rst = Pin(pin_rst, Pin.OUT, value=1)
 
-        self.led = Pin(pin_led, Pin.OUT, value=1)
+        self.led = PWM(Pin(pin_led), freq=1000)
+        self.led.duty(1023)  # full brightness (ESP32: 0–1023)
 
         self.spi = SPI(
             spi_id,
@@ -50,6 +51,14 @@ class ST7796Display:
 
         self._init_display()
 
+    def set_backlight(self, level):
+        """
+        level: 0–100 (% brightness)
+        """
+        level = max(0, min(100, level))
+        duty = int((level / 100) * 1023)
+        self.led.duty(duty)
+        
     def _get_glyph(self, ch):
         if ch in self.glyph_cache:
             return self.glyph_cache[ch]
@@ -236,9 +245,31 @@ class ST7796Display:
                     
     def text(self, x, y, w, h, string, color, bg=0x0000, font_size=30):
         if font_size != 30:
-            fbuf = framebuf.FrameBuffer(bytearray(w * h * 2), w, h, framebuf.RGB565)
+            fbuf = framebuf.FrameBuffer(
+                bytearray(w * h * 2),
+                w,
+                h,
+                framebuf.RGB565
+            )
+        
             fbuf.fill(bg)
-            fbuf.text(string, 0, 0, color)
+        
+            # --- safety: clip string to fit width ---
+            max_chars = max(1, w // font_size)
+            clipped = string[:max_chars]
+        
+            # --- safety: clip vertically ---
+            max_lines = max(1, h // font_size)
+        
+            y0 = 0
+            lines = [clipped[i:i+max_chars] for i in range(0, len(clipped), max_chars)]
+        
+            for i, line in enumerate(lines):
+                if i >= max_lines:
+                    break
+                fbuf.text(line, 0, y0, color)
+                y0 += font_size
+        
             self.blit(fbuf, x, y, w, h)
             return
 
@@ -275,3 +306,30 @@ class ST7796Display:
             )
     
             cx += gw + space
+
+    def line(self, x0, y0, x1, y1, color):
+    
+        dx = abs(x1 - x0)
+        dy = -abs(y1 - y0)
+    
+        sx = 1 if x0 < x1 else -1
+        sy = 1 if y0 < y1 else -1
+    
+        err = dx + dy
+    
+        while True:
+    
+            self.pixel(x0, y0, color)
+    
+            if x0 == x1 and y0 == y1:
+                break
+    
+            e2 = 2 * err
+    
+            if e2 >= dy:
+                err += dy
+                x0 += sx
+    
+            if e2 <= dx:
+                err += dx
+                y0 += sy
