@@ -1,35 +1,45 @@
-# device=/dev/ttyUSB0
+#!/bin/bash
+
 device=/dev/ttyACM0
-# cp gpx_streamer.py /mnt/c/Users/googo/Documents/gpx_simulator/.
-mpremote connect $device fs cp config.py :
-mpremote connect $device fs cp led_status_manager.py :
-mpremote connect $device fs cp bq25185.py :
+state_file=.mpremote_hashes
 
-mpremote connect $device fs cp mem.py :
-mpremote connect $device fs cp timer.py :
-mpremote connect $device fs cp app.py :
+touch "$state_file"
 
-mpremote connect $device fs cp hud.py :
-mpremote connect $device fs cp widget.py :
+hash_file () {
+  sha256sum "$1" | awk '{print $1}'
+}
 
-mpremote connect $device fs cp ble_gps_server.py :
-mpremote connect $device fs cp route.py :
-mpremote connect $device fs cp gpx_streamer.py :
+upload () {
+  file="$1"
+  new_hash=$(hash_file "$file")
+  old_hash=$(grep "^$file " "$state_file" | awk '{print $2}')
 
-mpremote connect $device fs cp -r routes/ :
+  if [ "$new_hash" != "$old_hash" ]; then
+    echo "Uploading $file"
+    mpremote connect "$device" fs cp "$file" :
 
-mpremote connect $device fs cp sdcard/* :
+    grep -v "^$file " "$state_file" > "$state_file.tmp"
+    echo "$file $new_hash" >> "$state_file.tmp"
+    mv "$state_file.tmp" "$state_file"
+  fi
+}
 
+upload config.py
+upload led_status_manager.py
+upload bq25185.py
+upload mem.py
+upload timer.py
+upload app.py
+upload hud.py
+upload widget.py
+upload ble_gps_server.py
+upload route.py
+upload gpx_streamer.py
+upload st7796.py
+upload writer.py
+upload arial30.py
+upload main.py
 
-mpremote connect $device fs cp st7796.py :
-
-mpremote connect $device fs cp writer.py :
-mpremote connect $device fs cp arial30.py :
-
-mpremote connect $device fs cp main.py :
-
-mpremote connect $device reset
-
+mpremote connect "$device" reset
 sleep 1
-
-picocom -b 115200 $device
+picocom -b 115200 "$device"

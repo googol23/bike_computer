@@ -1,4 +1,4 @@
-from gpx_streamer import GPXStreamReader, distance_2d_km
+from gpx_streamer import GPXStreamReader, distance_2d_m
 
 class Widget:
     def __init__(self, name:str, x:int, y:int, w:int, h:int, value=None):
@@ -49,6 +49,7 @@ class TextWidget(Widget):
         self.font_size = font_size
 
     def render(self, display):
+        display.fill_rect(self.x, self.y, self.w, self.h, 0x0000)
         display.text(self.x + 4, self.y + 4, self.w, self.h, self.text, 0xFFFF, font_size=self.font_size)
         self.dirty = False
 
@@ -77,7 +78,7 @@ class ValueWidget(Widget):
         # value alignment center-center
         value_x_0 = self.x + padding
         value_y_0 = self.y + label_font_size + padding
-        value_width_pxl = self.w - 2*padding
+        value_width_pxl = self.w - 2*padding - units_width_pxl 
         values_h = h - label_font_size - padding
         
         
@@ -119,13 +120,24 @@ class ValueWidget(Widget):
             self.units_widget,
         ]
         
+        self.formater = None
+        
+    def format_value(self, value):
+        return f"{value:.2f}" if self.formater is None else self.formater(value)
+
+    def set_formater(self, formater):
+        self.formater = formater
+        self.value_widget.text = self.format_value(self._last_value)
+        self.value_widget.dirty = True
+        self.dirty = True
+        
     def update(self, values):
         super().update(values)
 
         # Extract value from values tuple updated by superclass
         if self.values and len(self.values) > 0:
             self._last_value = self.values[0]
-            self.value_widget.text = f"{self._last_value:.2f}"
+            self.value_widget.text = self.format_value(self._last_value)
             self.value_widget.dirty = True
             self.dirty = True
 
@@ -165,19 +177,19 @@ class TimerWidget(Widget):
             time_x_0,
             value_y_0,
             pad_size,
-            pad_size
+            30
         )
         self.mm_widget = TextWidget(("MM " + name),
             time_x_0 + pad_size,
             value_y_0,
             pad_size,
-            pad_size
+            30
         )
         self.ss_widget = TextWidget(("SS " + name),
             time_x_0 + pad_size*2,
             value_y_0,
             pad_size,
-            pad_size
+            30
         )
 
         h, m, s = self.values if len(self.values) == 3 else (0, 0, 0)
@@ -228,83 +240,6 @@ class CoordinateWidget(Widget):
             lon_str = f"{abs(self.values[1]):.4f}{'E' if self.values[1] > 0 else 'W'}"
 
             text = f"{lat_str}\n{lon_str} "
-
-        display.text(self.x + 4, self.y + 4, self.w, self.h, text, 0xFFFF)
-
-        self.dirty = False
-
-class SpeedWidget(Widget):
-    def __init__(self, name, x, y, w, h, value=None):
-        super().__init__(name, x, y, w, h, value)
-        self.values: tuple = (0,)
-
-        FONT_SIZE = 8
-        text_width_pxl = len(name) * FONT_SIZE
-        label_width_pxl = text_width_pxl if text_width_pxl < w else w
-        label_x_0 = x + (w - label_width_pxl) // 2
-        value_y_0 = self.y + FONT_SIZE + 10
-        units_x_0 = x + int(0.80*w)
-        units_wth = int(0.2*w)
-        values_h = h - FONT_SIZE - 10
-        
-        
-        self.backg_widget = AreaWidget(("Background " + name), self.x, self.y, self.w, self.h, 0x0000)
-        
-        self.label_widget = TextWidget(
-            ("Label " + name),
-            label_x_0,
-            self.y,
-            label_width_pxl,
-            FONT_SIZE,
-            name,
-            8
-        )
-
-        self.value_widget = TextWidget(
-            ("Value " + name),
-            x+20,
-            value_y_0,
-            units_x_0,
-            values_h,
-            str(value)
-        )
-
-        self.units_widget = TextWidget(
-            ("Units " + name),
-            units_x_0,
-            value_y_0,
-            units_wth,
-            values_h,
-            "km/h",
-            8
-        )        
-        
-        self.widgets = [
-            self.backg_widget,
-            self.label_widget,
-            self.value_widget,
-            self.units_widget
-        ]
-
-    def update(self, values):
-        super().update(values)
-        self.value_widget.text = f"{values[0]:.2f}" if values and len(values) > 0 else f"0.00"
-        self.value_widget.dirty = True
-        self.dirty = True
-        
-
-
-class SlopeWidget(Widget):
-    def __init__(self, name, x, y, w, h, value=None):
-        super().__init__(name, x, y, w, h, value)
-        
-    def render(self, display):
-        display.fill_rect(self.x, self.y, self.w, self.h, 0x0000)
-        
-        if len(self.values) == 0:
-            text = self.name
-        else:
-            text = f"{self.values[0]} %"
 
         display.text(self.x + 4, self.y + 4, self.w, self.h, text, 0xFFFF)
 
@@ -362,29 +297,130 @@ class LocationWidget(Widget):
                     if dx * dx + dy * dy <= r * r:
                         display.pixel(sx + dx, sy + dy, self.color)
             
+class ElevationWidget(Widget):
+    def __init__(self, name, x, y, w, h):
+        super().__init__(name, x, y, w, h)
+        self.screen_points: list[tuple[int, int, float]] = []
+
+
+    def project_to_screen(self, points, padding=10):
+        self.screen_points = []
+    
+        x0, y0, h0 = points[0]
+    
+        length_2d = distance_2d_m(
+            points[0][0], points[0][1],
+            points[-1][0], points[-1][1]
+        )
+    
+        if length_2d == 0:
+            return []
+    
+        min_elevation = min(p[2] for p in points)
+        max_elevation = max(p[2] for p in points)
+        elev_range = max_elevation - min_elevation or 1
+    
+        usable_w = self.w - 2 * padding
+        usable_h = self.h - 2 * padding
+    
+        for i in range(len(points)):
+            xi, yi, hi = points[i]
+    
+            dist = distance_2d_m(xi, yi, x0, y0)
+    
+            slope = 0
+            if i > 0:
+                _, _, hp = points[i - 1]
+                prev = distance_2d_m(points[i - 1][0], points[i - 1][1], x0, y0)
+                d = max(0.00001, dist - prev)
+                slope = (hi - hp) / d
+    
+            px = self.x + padding + int(dist / length_2d * usable_w)
+    
+            py = (
+                self.y + self.h - padding
+                - int((hi - min_elevation) / elev_range * usable_h)
+            )
+    
+            self.screen_points.append((px, py, slope))
+    
+        return self.screen_points
+
+    def slope_to_color(self, slope):
+        # negative = white (as you already decided)
+        if slope < 0:
+            return 0xFFFFFF
+    
+        # convert to m/km if slope is in meters per meter or similar
+        s = slope * 1000  # adjust ONLY if your slope is km-based; remove if already m/km
+    
+        if s < 50:
+            return 0x00FF00  # green (easy)
+    
+        elif s < 120:
+            return 0xFFA500  # orange (medium)
+    
+        else:
+            return 0xFF0000  # red (hard)
+
+    def render(self, display):
+        display.fill_rect(self.x, self.y, self.w, self.h, 0x0000)
+    
+        if len(self.screen_points) < 2:
+            return
+    
+        for i in range(1, len(self.screen_points)):
+            x1, y1, s1 = self.screen_points[i - 1]
+            x2, y2, s2 = self.screen_points[i]
+    
+            color = self.slope_to_color((s1 + s2) * 0.5)
+    
+            display.line(
+                x1, y1,
+                x2, y2,
+                color
+            )
+    
+        self.dirty = False
+        
 
 class RouteWidget(Widget):
-    def __init__(self, name, x, y, w, h, color=0xFFFF):
+    def __init__(self, name, x, y, w, h, ):
         super().__init__(name, x, y, w, h)
         self.points = []
-        self.color = color
         self.scale = 5
 
-        self.loc = LocationWidget("loc", 0, 0, self.w, self.h, 0xFF0000)
+        margin = 5
+        elevation_pad_height = 60
+
+        self.route_panel_x = self.x
+        self.route_panel_y = self.y + elevation_pad_height + margin
+        self.route_panel_w = self.w
+        self.route_panel_h = self.h - elevation_pad_height - 2*margin
+
+        self.loc_in_route = LocationWidget("loc", self.route_panel_x, self.route_panel_y, self.route_panel_w, self.route_panel_h, 0xFF0000)
+        
+        self.elevation_widget = ElevationWidget("elv", self.x, self.y, self.w, elevation_pad_height)
+
 
     def update(self, values):
         if values is not None:
             lat, lon = values
-            self.loc.update((lat, lon))
+            self.loc_in_route.update((lat, lon))
 
-            if distance_2d_km(self.points[-1][0], self.points[-1][1], lat, lon) < 0.001:
+            if distance_2d_m(self.points[-1][0], self.points[-1][1], lat, lon) < 0.001:
                 self.points = self.streamer.next_km(self.scale)
+                self.elevation_widget.project_to_screen(self.points)
+                self.elevation_widget.dirty = True
             
             self.dirty = True
 
     def load_route(self, route_name):
         self.streamer = GPXStreamReader("routes/" + route_name + ".gpx")
         self.points = self.streamer.next_km(self.scale)
+
+        self.elevation_widget.project_to_screen(self.points)
+        self.elevation_widget.dirty = True
         
         lats = [p[0] for p in self.points]
         lons = [p[1] for p in self.points]
@@ -395,7 +431,7 @@ class RouteWidget(Widget):
         min_lon = min(lons)
         max_lon = max(lons)
 
-        self.loc.set_bounds(min_lat, max_lat, min_lon, max_lon)
+        self.loc_in_route.set_bounds(min_lat, max_lat, min_lon, max_lon)
         self.dirty = True
 
     def project_to_screen(self, padding=10):
@@ -422,8 +458,8 @@ class RouteWidget(Widget):
         if lon_range == 0:
             lon_range = 1
 
-        scale_x = (self.w - 2 * padding) / lon_range
-        scale_y = (self.h - 2 * padding) / lat_range
+        scale_x = (self.route_panel_w - 2 * padding) / lon_range
+        scale_y = (self.route_panel_h - 2 * padding) / lat_range
 
         scale = min(scale_x, scale_y)
 
@@ -433,7 +469,7 @@ class RouteWidget(Widget):
 
             x = (lon - min_lon) * scale + padding
 
-            y = self.h - (
+            y = self.route_panel_h - (
                 (lat - min_lat) * scale + padding
             )
 
@@ -444,24 +480,30 @@ class RouteWidget(Widget):
         return screen_points
 
     def render(self, display):
-        display.fill_rect(self.x, self.y, self.w, self.h, 0x0000)
+        # display.fill_rect(self.x, self.y, self.w, self.h, 0xFF00)
+
+        if self.elevation_widget.dirty:
+            self.elevation_widget.render(display)
+            self.elevation_widget.dirty = False
+        
+        display.fill_rect(self.route_panel_x, self.route_panel_y, self.route_panel_w, self.route_panel_h, 0x0000)
         if len(self.points) < 2:
             return
 
-        screen_points = self.project_to_screen()
 
-        for i in range(1, len(screen_points)):
-            x1, y1 = screen_points[i - 1]
-            x2, y2 = screen_points[i]
+        route_screen_points = self.project_to_screen()
+        for i in range(1, len(route_screen_points)):
+            x1, y1 = route_screen_points[i - 1]
+            x2, y2 = route_screen_points[i]
 
             display.line(
-                self.x + x1,
-                self.y + y1,
-                self.x + x2,
-                self.y + y2,
-                self.color
+                self.route_panel_x + x1,
+                self.route_panel_y + y1,
+                self.route_panel_x + x2,
+                self.route_panel_y + y2,
+                0xFFFFF
             )
 
-        self.loc.render(display)
+        self.loc_in_route.render(display)
         
         self.dirty = False

@@ -3,15 +3,26 @@ import mem
 
 from ble_gps_server import BLEGPSServer
 from hud import Hud
-from st7796 import ST7796Display
 from route import Route
-from widget import ValueWidget, SlopeWidget, SpeedWidget, CoordinateWidget, TimerWidget, RouteWidget
-from gpx_streamer import distance_3d_km, distance_2d_km
+from widget import ValueWidget, CoordinateWidget, TimerWidget, RouteWidget, ElevationWidget, AreaWidget
+from gpx_streamer import distance_3d_m, distance_2d_m
 
 import timer
 
 TFT_WIDTH = 320
 TFT_HEIGHT = 480
+
+def distance_formater(value):
+    if value is None:
+        return "N/A"
+
+    if value < 100:
+        return f"{value:.2f}"
+
+    if value < 1000:
+        return f"{value:.1f}"
+
+    return f"{value:.0f}"
 
 class AppManager:
     def __init__(self, display, charger):
@@ -42,6 +53,7 @@ class AppManager:
         margin = 5
         pad_height = 55
         
+        # TIMER
         n_panels = 2
         pad_width = int(0.50*TFT_WIDTH)
         self.hud.add_widget(
@@ -54,6 +66,7 @@ class AppManager:
             )
         )
 
+        # SPEED
         self.hud.add_widget(
             ValueWidget(
                 "SPEED",
@@ -67,6 +80,7 @@ class AppManager:
             )
         )
         
+        # AVG. SPEED
         n_panels = 2
         pad_width = (TFT_WIDTH - (n_panels+1) * margin) // n_panels
         self.hud.add_widget(
@@ -82,6 +96,7 @@ class AppManager:
             )
         )
 
+        # DISTANCE
         self.hud.add_widget(
             ValueWidget(
                 "DISTANCE",
@@ -94,21 +109,22 @@ class AppManager:
                 "km"
             )
         )
+        self.hud.widgets["DISTANCE"].set_formater(distance_formater)
 
-        n_panels = 1
-        pad_width = (TFT_WIDTH - (n_panels+1) * margin) // n_panels
+
+        
+        # ROUTE
+        pad_width = TFT_WIDTH - 2*margin
         self.hud.add_widget(
             RouteWidget(
                 "ROUTE",
                 margin,
-                3*(pad_height + margin),
+                2*pad_height + 3*margin,
                 pad_width,
-                TFT_HEIGHT - 3*(pad_height + margin))
+                TFT_HEIGHT - 2*pad_height - 4*margin)
         )
-        
         self.hud.widgets["ROUTE"].load_route("arheilgen_to_Bessungen")
-
-
+        
         self._dirty = True
 
     # -----------------------------
@@ -124,7 +140,7 @@ class AppManager:
             return
 
         if self._last_lat is not None and self._last_lon is not None:
-            d = distance_2d_km(
+            d = distance_2d_m(
                     self._last_lat,
                     self._last_lon,
                     lat,
@@ -134,8 +150,8 @@ class AppManager:
             d = 0
             
         # ignore GPS noise
-        if d > 2:
-            self._total_distance += d
+        if d > 0.001:
+            self._total_distance += d * 0.001
 
         self._last_lat = lat
         self._last_lon = lon
@@ -174,7 +190,7 @@ class AppManager:
             if self.charger.is_charging():
                 pass
 
-
+            self.display.flush()
             await asyncio.sleep(0.01)
 
     # -----------------------------

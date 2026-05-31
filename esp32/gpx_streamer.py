@@ -2,7 +2,7 @@ import math
 
 EARTH_RADIUS = 6371000  # meters
 
-def distance_2d_km(lat1, lon1, lat2, lon2):
+def distance_2d_m(lat1, lon1, lat2, lon2):
     if lat1 is None or lon1 is None or lat2 is None or lon2 is None:
         return 0
     
@@ -25,7 +25,7 @@ def distance_2d_km(lat1, lon1, lat2, lon2):
     return EARTH_RADIUS * c
 
 
-def distance_3d_km(lat1, lon1, ele1, lat2, lon2, ele2):
+def distance_3d_m(lat1, lon1, ele1, lat2, lon2, ele2):
     
     dlat = math.radians(lat2 - lat1)
     dlon = math.radians(lon2 - lon1)
@@ -41,7 +41,7 @@ def distance_3d_km(lat1, lon1, ele1, lat2, lon2, ele2):
 
     dist = math.sqrt(ground * ground + delev * delev)
 
-    return dist / 1000.0  # km
+    return dist
     
 class GPXStreamReader:
     """
@@ -131,7 +131,7 @@ class GPXStreamReader:
 
         return points
 
-    def next_km(self, target_km: float):
+    def next_km(self, target_km: float) -> list[tuple[float, float, float]]:
     
         if self._eof:
             return []
@@ -170,10 +170,10 @@ class GPXStreamReader:
                     points.append(current)
     
                     if prev is not None:
-                        distance += distance_3d_km(
+                        distance += distance_3d_m(
                             prev[0], prev[1], prev[2],
                             current[0], current[1], current[2]
-                        )
+                        ) * 0.001
     
                     prev = current
                     self._in_trkpt = False

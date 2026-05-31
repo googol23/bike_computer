@@ -4,7 +4,7 @@ from app import AppManager, TFT_HEIGHT, TFT_WIDTH
 
 
 import bq25185
-from st7796 import ST7796Display
+from st7796 import ST7796Display, ST7796DisplayPSRAM
 
 from led_status_manager import LEDStatusManager, LEDState
 
@@ -45,7 +45,7 @@ async def main():
     led.set_state(LEDState.INIT)
 
     # --- Display init ---
-    display = ST7796Display(TFT_WIDTH, TFT_HEIGHT)
+    display = ST7796DisplayPSRAM(TFT_WIDTH, TFT_HEIGHT)
     display.clear(0xFFFFFF)
     display.set_backlight(50)
 
