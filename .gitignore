@@ -218,3 +218,4 @@ __marimo__/
 .streamlit/secrets.toml
 
 route_gen/keys.py
+esp32/*.md
