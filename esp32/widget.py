@@ -1,5 +1,7 @@
 from gpx_streamer import GPXStreamReader, distance_2d_m
+from navigation import NavigationEngine
 
+from arrow_sprites import ArrowSprites
 class Widget:
     def __init__(self, name:str, x:int, y:int, w:int, h:int, value=None):
         self.widgets: list = []
@@ -300,38 +302,41 @@ class LocationWidget(Widget):
 class ElevationWidget(Widget):
     def __init__(self, name, x, y, w, h):
         super().__init__(name, x, y, w, h)
-        self.screen_points: list[tuple[int, int, float]] = []
 
+        self.streamer: GPXStreamReader | None = None
 
-    def project_to_screen(self, points, padding=10):
-        self.screen_points = []
+    def project_to_screen(self, padding=10):
+        if self.streamer is None or self.streamer.gpx_pts is None:
+            return []
+
+        screen_points = []
     
-        x0, y0, h0 = points[0]
+        x0, y0, h0 = self.streamer.gpx_pts[0]
     
         length_2d = distance_2d_m(
-            points[0][0], points[0][1],
-            points[-1][0], points[-1][1]
+            self.streamer.gpx_pts[0][0], self.streamer.gpx_pts[0][1],
+            self.streamer.gpx_pts[-1][0], self.streamer.gpx_pts[-1][1]
         )
     
         if length_2d == 0:
             return []
     
-        min_elevation = min(p[2] for p in points)
-        max_elevation = max(p[2] for p in points)
+        min_elevation = min(p[2] for p in self.streamer.gpx_pts)
+        max_elevation = max(p[2] for p in self.streamer.gpx_pts)
         elev_range = max_elevation - min_elevation or 1
     
         usable_w = self.w - 2 * padding
         usable_h = self.h - 2 * padding
     
-        for i in range(len(points)):
-            xi, yi, hi = points[i]
+        for i in range(len(self.streamer.gpx_pts)):
+            xi, yi, hi = self.streamer.gpx_pts[i]
     
             dist = distance_2d_m(xi, yi, x0, y0)
     
             slope = 0
             if i > 0:
-                _, _, hp = points[i - 1]
-                prev = distance_2d_m(points[i - 1][0], points[i - 1][1], x0, y0)
+                _, _, hp = self.streamer.gpx_pts[i - 1]
+                prev = distance_2d_m(self.streamer.gpx_pts[i - 1][0], self.streamer.gpx_pts[i - 1][1], x0, y0)
                 d = max(0.00001, dist - prev)
                 slope = (hi - hp) / d
     
@@ -342,12 +347,13 @@ class ElevationWidget(Widget):
                 - int((hi - min_elevation) / elev_range * usable_h)
             )
     
-            self.screen_points.append((px, py, slope))
+            screen_points.append((px, py, slope))
     
-        return self.screen_points
+        return screen_points
 
     def slope_to_color(self, slope):
         # negative = white (as you already decided)
+        return 0xFFFFFF
         if slope < 0:
             return 0xFFFFFF
     
@@ -365,13 +371,16 @@ class ElevationWidget(Widget):
 
     def render(self, display):
         display.fill_rect(self.x, self.y, self.w, self.h, 0x0000)
-    
-        if len(self.screen_points) < 2:
+
+
+        if self.streamer is None or len(self.streamer.gpx_pts) < 2:
             return
     
-        for i in range(1, len(self.screen_points)):
-            x1, y1, s1 = self.screen_points[i - 1]
-            x2, y2, s2 = self.screen_points[i]
+        screen_points = self.project_to_screen()
+        
+        for i in range(1, len(screen_points)):
+            x1, y1, s1 = screen_points[i - 1]
+            x2, y2, s2 = screen_points[i]
     
             color = self.slope_to_color((s1 + s2) * 0.5)
     
@@ -383,64 +392,22 @@ class ElevationWidget(Widget):
     
         self.dirty = False
         
-
 class RouteWidget(Widget):
     def __init__(self, name, x, y, w, h, ):
         super().__init__(name, x, y, w, h)
-        self.points = []
-        self.scale = 5
 
-        margin = 5
-        elevation_pad_height = 60
+        self.streamer: GPXStreamReader | None = None
 
-        self.route_panel_x = self.x
-        self.route_panel_y = self.y + elevation_pad_height + margin
-        self.route_panel_w = self.w
-        self.route_panel_h = self.h - elevation_pad_height - 2*margin
-
-        self.loc_in_route = LocationWidget("loc", self.route_panel_x, self.route_panel_y, self.route_panel_w, self.route_panel_h, 0xFF0000)
-        
-        self.elevation_widget = ElevationWidget("elv", self.x, self.y, self.w, elevation_pad_height)
-
-
-    def update(self, values):
-        if values is not None:
-            lat, lon = values
-            self.loc_in_route.update((lat, lon))
-
-            if distance_2d_m(self.points[-1][0], self.points[-1][1], lat, lon) < 0.001:
-                self.points = self.streamer.next_km(self.scale)
-                self.elevation_widget.project_to_screen(self.points)
-                self.elevation_widget.dirty = True
-            
-            self.dirty = True
-
-    def load_route(self, route_name):
-        self.streamer = GPXStreamReader("routes/" + route_name + ".gpx")
-        self.points = self.streamer.next_km(self.scale)
-
-        self.elevation_widget.project_to_screen(self.points)
-        self.elevation_widget.dirty = True
-        
-        lats = [p[0] for p in self.points]
-        lons = [p[1] for p in self.points]
-
-        min_lat = min(lats)
-        max_lat = max(lats)
-
-        min_lon = min(lons)
-        max_lon = max(lons)
-
-        self.loc_in_route.set_bounds(min_lat, max_lat, min_lon, max_lon)
-        self.dirty = True
 
     def project_to_screen(self, padding=10):
-
-        if not self.points:
+        if self.streamer is None or self.streamer.gpx_pts is None:
+            print("streamer is None or gpx_pts is None")
             return []
 
-        lats = [p[0] for p in self.points]
-        lons = [p[1] for p in self.points]
+        # print("project_to_screen", self.streamer.gpx_pts)
+        pts = self.streamer.rdp()
+        lats = [p[0] for p in pts]
+        lons = [p[1] for p in pts]
 
         min_lat = min(lats)
         max_lat = max(lats)
@@ -458,18 +425,18 @@ class RouteWidget(Widget):
         if lon_range == 0:
             lon_range = 1
 
-        scale_x = (self.route_panel_w - 2 * padding) / lon_range
-        scale_y = (self.route_panel_h - 2 * padding) / lat_range
+        scale_x = (self.w - 2 * padding) / lon_range
+        scale_y = (self.h - 2 * padding) / lat_range
 
         scale = min(scale_x, scale_y)
 
         screen_points = []
 
-        for lat, lon, _ in self.points:
+        for lat, lon, _ in pts:
 
             x = (lon - min_lon) * scale + padding
 
-            y = self.route_panel_h - (
+            y = self.h - (
                 (lat - min_lat) * scale + padding
             )
 
@@ -480,30 +447,145 @@ class RouteWidget(Widget):
         return screen_points
 
     def render(self, display):
-        # display.fill_rect(self.x, self.y, self.w, self.h, 0xFF00)
-
-        if self.elevation_widget.dirty:
-            self.elevation_widget.render(display)
-            self.elevation_widget.dirty = False
+        super().render(display)
         
-        display.fill_rect(self.route_panel_x, self.route_panel_y, self.route_panel_w, self.route_panel_h, 0x0000)
-        if len(self.points) < 2:
+        display.fill_rect(self.x, self.y, self.w, self.h, 0x0000)
+
+        if self.streamer is None or len(self.streamer.gpx_pts) < 2:
             return
-
-
+        
         route_screen_points = self.project_to_screen()
         for i in range(1, len(route_screen_points)):
             x1, y1 = route_screen_points[i - 1]
             x2, y2 = route_screen_points[i]
-
+        
             display.line(
-                self.route_panel_x + x1,
-                self.route_panel_y + y1,
-                self.route_panel_x + x2,
-                self.route_panel_y + y2,
+                self.x + x1,
+                self.y + y1,
+                self.x + x2,
+                self.y + y2,
                 0xFFFFF
             )
-
-        self.loc_in_route.render(display)
         
         self.dirty = False
+
+
+class NavigationInfoWidget(Widget):
+    def __init__(self, name, x, y, w, h):
+        super().__init__(name, x, y, w, h)
+
+        self.nav_engine: NavigationEngine | None = None
+
+        margin = 2
+        text_x = self.x + margin
+        text_y = self.y + margin
+        text_w = self.w - 2*margin
+        text_h = self.h // 2
+
+        self.arrow_sprite_x = self.x + self.w // 2 - 64
+        self.arrow_sprite_y = self.y + self.h // 2
+
+        self.desc = TextWidget("NavInfo.desc",text_x, text_y, text_w, text_h, "Waiting instructions ...", 24)
+
+        self.widgets = [
+            AreaWidget("area", self.x, self.y, self.w, self.h, 0x0),
+            self.desc,
+        ]
+        
+    def update(self, values):
+        self.desc.text = self.nav_engine.current_instruction()['desc']
+        self.desc.dirty = True
+        self.dirty = True
+        
+    def render(self, display):
+        super().render(display)
+        print(self.nav_engine.current_instruction())
+
+        sign = self.nav_engine.current_instruction()['sign']
+        
+        arrow = ArrowSprites(display, sign)
+        arrow.blit(self.arrow_sprite_x, self.arrow_sprite_y)
+                
+        
+        
+        
+
+class NavigationWidget(Widget):
+    def __init__(self, name, x, y, w, h):
+        super().__init__(name, x, y, w, h)
+
+        self.engine = None
+        self.scale = 0.2
+
+        self.streamer: GPXStreamReader | None = None
+
+        margin = 5
+
+        elevation_panel_x = self.x
+        elevation_panel_y = self.y
+        elevation_panel_w = self.w
+        elevation_panel_h = 60
+
+        route_panel_x = self.x
+        route_panel_y = self.y + elevation_panel_h + margin
+        route_panel_w = self.w // 2
+        route_panel_h = self.h - elevation_panel_h - 2*margin
+
+        nav_info_panel_x = self.x + route_panel_w + margin
+        nav_info_panel_y = self.y + elevation_panel_h + margin
+        nav_info_panel_w = self.w - route_panel_w - margin
+        nav_info_panel_h = route_panel_h
+
+
+        # self.loc_in_route = LocationWidget("loc_in_route", route_panel_x, route_panel_y, route_panel_w, route_panel_h, 0xFF0000)
+        # self.loc_in_eleva = LocationWidget("loc_in_eleva", route_panel_x, route_panel_y, route_panel_w, route_panel_h, 0xFF0000)
+        self.elevation_widget = ElevationWidget("elv", elevation_panel_x, elevation_panel_y, elevation_panel_w, elevation_panel_h)
+        self.route_widget = RouteWidget("route", route_panel_x, route_panel_y, route_panel_w, route_panel_h)
+        self.nav_info_widget = NavigationInfoWidget("nav_info", nav_info_panel_x, nav_info_panel_y, nav_info_panel_w, nav_info_panel_h)
+
+        self.widgets = [
+            # self.loc_in_route,
+            # self.loc_in_eleva,
+            self.elevation_widget,
+            self.route_widget,
+            self.nav_info_widget,
+        ]
+
+    def load_route(self, route_name):
+        self.streamer = GPXStreamReader("routes/" + route_name + ".gpx")
+        self.streamer.next_km(self.scale)
+        print(f"len(self.streamer.gpx_pts): {len(self.streamer.gpx_pts)}")
+        self.streamer.load_navigation()
+
+
+        self.route_widget.streamer = self.streamer
+        self.elevation_widget.streamer = self.streamer
+        
+        self.engine = NavigationEngine(self.streamer.nav_pts)
+        self.nav_info_widget.nav_engine = self.engine
+        self.nav_info_widget.update(None)
+
+        self.dirty = True
+
+    def update(self, values):
+        if values is not None:
+            lat, lon = values
+
+            if self.engine.update_position(lat, lon):
+                print("New navigation instructions")
+                self.nav_info_widget.update(None)
+
+            if self.streamer is not None and distance_2d_m(self.streamer.gpx_pts[-1][0], self.streamer.gpx_pts[-1][1], lat, lon) < 1:
+                self.streamer.next_km(self.scale)
+
+                self.elevation_widget.dirty = True
+                self.route_widget.dirty = True
+
+            
+            self.dirty = True
+
+        
+
+    def render(self, display):
+        super().render(display)
+    

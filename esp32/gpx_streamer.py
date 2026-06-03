@@ -2,6 +2,7 @@ import math
 
 EARTH_RADIUS = 6371000  # meters
 
+
 def distance_2d_m(lat1, lon1, lat2, lon2):
     if lat1 is None or lon1 is None or lat2 is None or lon2 is None:
         return 0
@@ -24,7 +25,6 @@ def distance_2d_m(lat1, lon1, lat2, lon2):
 
     return EARTH_RADIUS * c
 
-
 def distance_3d_m(lat1, lon1, ele1, lat2, lon2, ele2):
     
     dlat = math.radians(lat2 - lat1)
@@ -34,6 +34,7 @@ def distance_3d_m(lat1, lon1, ele1, lat2, lon2, ele2):
          math.cos(math.radians(lat1)) *
          math.cos(math.radians(lat2)) *
          math.sin(dlon / 2) ** 2)
+    
 
     ground = 2 * EARTH_RADIUS * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
@@ -42,6 +43,7 @@ def distance_3d_m(lat1, lon1, ele1, lat2, lon2, ele2):
     dist = math.sqrt(ground * ground + delev * delev)
 
     return dist
+
     
 class GPXStreamReader:
     """
@@ -57,16 +59,89 @@ class GPXStreamReader:
         self.file = open(file_path, "r", encoding="utf-8")
 
         self._in_trkpt = False
+
         self._lat = 0.0
         self._lon = 0.0
         self._ele = 0.0
+
+        self.nav_pts = []
+
+        self.gpx_pts = []
 
         self._eof = False
 
     # ----------------------------
     # internal parsing helpers
     # ----------------------------
+    def load_navigation(self):
+        print("[NAV] Loading navigation (ESP32 mode)...")
+    
+        self.file.seek(0)
+        self._eof = False
+        self.nav_pts = []
+    
+        current: dict = {}
+        in_rtept = False
+    
+        for raw in self.file:
+            
+            line = raw.strip()
+    
+            # start route point
+            if "<rtept" in line:
+                lat = self._parse_float_attr(line, "lat")
+                lon = self._parse_float_attr(line, "lon")
 
+   
+                current = {
+                    "lat": lat,
+                    "lon": lon,
+                    "desc": "",
+                    "distance": 0.0,
+                    "sign": 0
+                }
+    
+                in_rtept = True
+    
+            if not in_rtept:
+                continue
+    
+            # description (direct child)
+            if "<desc>" in line:
+                a = line.find("<desc>") + 6
+                b = line.find("</desc>")
+                if a != -1 and b != -1:
+                    current["desc"] = line[a:b].strip()
+
+            # gh:distance (inside extensions)
+            if "gh:distance" in line:
+                a = line.find("<gh:distance>") + len("<gh:distance>")
+                b = line.find("</gh:distance>")
+                if a != -1 and b != -1:
+                    try:
+                        current["distance"] = float(line[a:b])
+                    except:
+                        current["distance"] = 0.0
+
+            if "gh:sign" in line:
+                a = line.find("<gh:sign>") + len("<gh:sign>")
+                b = line.find("</gh:sign>")
+                if a != -1 and b != -1:
+                    try:
+                        current["sign"] = int(line[a:b])
+                    except:
+                        current["sign"] = None
+                        
+            # close route point
+            if "</rtept>" in line and len(current):
+                self.nav_pts.append(current)
+                current = {}
+                in_rtept = False
+
+    
+        self.file.seek(0)
+        print(f"[NAV] DONE. {len(self.nav_pts)} instructions loaded")
+        
     def _parse_float_attr(self, line, key):
         idx = line.find(key + '="')
         if idx == -1:
@@ -82,17 +157,89 @@ class GPXStreamReader:
             return 0.0
 
     # ----------------------------
+    # Route simplification
+    # ----------------------------
+    def project(self,lat, lon, bounds, width=480, height=320):
+        min_lat, max_lat, min_lon, max_lon = bounds
+    
+        x = (lon - min_lon) / (max_lon - min_lon) * width
+        y = (max_lat - lat) / (max_lat - min_lat) * height
+    
+        return x, y
+
+    def perpendicular_distance(self,px, py, x1, y1, x2, y2):
+        dx = x2 - x1
+        dy = y2 - y1
+    
+        if dx == 0 and dy == 0:
+            return ((px - x1)**2 + (py - y1)**2) ** 0.5
+    
+        t = ((px - x1) * dx + (py - y1) * dy) / (dx*dx + dy*dy)
+    
+        if t < 0:
+            x, y = x1, y1
+        elif t > 1:
+            x, y = x2, y2
+        else:
+            x, y = x1 + t * dx, y1 + t * dy
+    
+        return ((px - x)**2 + (py - y)**2) ** 0.5
+
+    def rdp(self, epsilon=0.0001) -> list:
+        pts = self.gpx_pts
+        n = len(pts)
+    
+        if n < 3:
+            return []
+    
+        perpendicular_distance = self.perpendicular_distance
+    
+        stack = [(0, n - 1)]
+        keep = [False] * n
+        keep[0] = True
+        keep[n - 1] = True
+    
+        while stack:
+            start, end = stack.pop()
+    
+            x1, y1, _ = pts[start]
+            x2, y2, _ = pts[end]
+    
+            dx = x2 - x1
+            dy = y2 - y1
+    
+            max_dist = -1.0
+            index = start
+    
+            for i in range(start + 1, end):
+                x, y, _ = pts[i]
+    
+                d = perpendicular_distance(x, y, x1, y1, x2, y2)
+    
+                if d > max_dist:
+                    max_dist = d
+                    index = i
+    
+            if max_dist > epsilon:
+                keep[index] = True
+                stack.append((start, index))
+                stack.append((index, end))
+    
+        return [pts[i] for i in range(n) if keep[i]]
+    
+    
+    # ----------------------------
     # main streaming method
     # ----------------------------
     def next_points(self, n: int):
         """
-        Return next N GPX points as [(lat, lon, ele), ...]
+        Collect the next N GPX points as [(lat, lon, ele), ...]
         """
 
         if self._eof:
-            return []
+            return
 
-        points = []
+        self.gpx_pts.clear()
 
         for line in self.file:
 
@@ -119,72 +266,73 @@ class GPXStreamReader:
                     self._ele = self._parse_ele(line)
 
                 if "</trkpt>" in line:
-                    points.append((self._lat, self._lon, self._ele))
+                    self.gpx_pts.append((self._lat, self._lon, self._ele))
                     self._in_trkpt = False
 
-                    if len(points) >= n:
-                        return points
+                    if len(self.gpx_pts) >= n:
+                        return
 
         # reached EOF
         self._eof = True
-        self.file.close()
 
-        return points
 
-    def next_km(self, target_km: float) -> list[tuple[float, float, float]]:
-    
+    def next_km(self, target_km: float):
         if self._eof:
-            return []
+            return
     
-        points = []
+        self.gpx_pts.clear()
     
         prev = None
         distance = 0.0
     
-        for line in self.file:
+        in_trkpt = False
+        lat = lon = ele = 0.0
     
+        for line in self.file:
             line = line.strip()
     
+            # fast reject
             if "<trkpt" in line:
-                self._in_trkpt = True
+                in_trkpt = True
     
                 lat = self._parse_float_attr(line, "lat")
                 lon = self._parse_float_attr(line, "lon")
     
-                if lat is not None:
-                    self._lat = lat
-                if lon is not None:
-                    self._lon = lon
+                ele = 0.0
     
-                self._ele = 0.0
+                # ele may be on same line
+                e1 = line.find("<ele>")
+                if e1 != -1:
+                    e2 = line.find("</ele>", e1)
+                    if e2 != -1:
+                        ele = float(line[e1 + 5:e2])
+    
+            if not in_trkpt:
                 continue
     
-            if self._in_trkpt:
+            # ele split across lines (rare but safe)
+            if line.startswith("<ele>") and ele == 0.0:
+                ele = self._parse_ele(line)
     
-                if "<ele>" in line:
-                    self._ele = self._parse_ele(line)
+            if "</trkpt>" in line:
+                current = (lat, lon, ele)
     
-                if "</trkpt>" in line:
-                    current = (self._lat, self._lon, self._ele)
+                self.gpx_pts.append(current)
     
-                    points.append(current)
+                if prev is not None:
+                    distance += distance_3d_m(
+                        prev[0], prev[1], prev[2],
+                        current[0], current[1], current[2]
+                    ) * 0.001
     
-                    if prev is not None:
-                        distance += distance_3d_m(
-                            prev[0], prev[1], prev[2],
-                            current[0], current[1], current[2]
-                        ) * 0.001
+                prev = current
+                in_trkpt = False
     
-                    prev = current
-                    self._in_trkpt = False
-    
-                    if distance >= target_km:
-                        return points
-    
+                if distance >= target_km:
+                    return
+
         self._eof = True
-        self.file.close()
-    
-        return points
+
         
     # ----------------------------
     # reset / reuse
@@ -200,13 +348,21 @@ class GPXStreamReader:
         if not self.file.closed:
             self.file.close()
 
-if __name__ == "__main__":
-    streamer = GPXStreamReader("routes/arheilgen_to_Bessungen.gpx")
-    while True:
-        points = streamer.next_points(5)
 
-        print(points, "\n")
+
+if __name__ == "__main__":
+    streamer = GPXStreamReader("routes/arheilgen_to_ludwigsturm.gpx")
+
+    # 
+    # while True:
+    #     points = streamer.next_points(5)
+
+    #     print(points, "\n")
         
-        if not points:
-            break
+    #     if not points:
+    #         break
+        
+    streamer.load_navigation()
+    for pt in streamer.nav_pts:
+        print(pt)
         

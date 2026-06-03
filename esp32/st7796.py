@@ -4,8 +4,11 @@ from machine import Pin, SPI, PWM
 import time
 
 import framebuf
+
+import arial16
+import arial24
 import arial30
-from writer import CWriter
+
 
 MAX_CACHE = 16
 # -------------------------
@@ -335,10 +338,13 @@ class ST7796Display:
                 y0 += sy
 
 
-
-
 MAX_GLYPH_CACHE = 16
 
+FONT_MAP = {
+    16: arial16,
+    24: arial24,
+    30: arial30,
+}
 
 class ST7796DisplayPSRAM:
     """
@@ -414,7 +420,7 @@ class ST7796DisplayPSRAM:
 
         self._init_display()
 
-        self.color_test()
+        # self.color_test()
 
     # =========================================================
     # BACKLIGHT
@@ -511,10 +517,10 @@ class ST7796DisplayPSRAM:
             self._mark_dirty(0, 0, self.w, self.h)
             self.flush()
             time.sleep_ms(delay_ms)
+
     # =========================================================
     # FRAME FLUSH
     # =========================================================
-
     def flush(self):
         if not self._dirty:
             return
@@ -624,27 +630,25 @@ class ST7796DisplayPSRAM:
     # TEXT RENDERING (GLYPH CACHE)
     # =========================================================
 
-    def _get_glyph(self, ch):
-        """
-        Load cached glyph or generate it.
-        """
-        if ch in self.glyph_cache:
-            return self.glyph_cache[ch]
-
-        glyph, gh, gw = arial30.get_ch(ch)
-
+    def _get_glyph(self, ch, font_size):
+        key = (font_size, ch)
+    
+        if key in self.glyph_cache:
+            return self.glyph_cache[key]
+    
+        font = FONT_MAP[font_size]
+    
+        glyph, gh, gw = font.get_ch(ch)
+    
         fb = framebuf.FrameBuffer(
             bytearray(glyph),
             gw,
             gh,
             framebuf.MONO_HLSB
         )
-
-        self.glyph_cache[ch] = (fb, gw, gh)
-
-        if len(self.glyph_cache) > MAX_GLYPH_CACHE:
-            self.glyph_cache.pop(next(iter(self.glyph_cache)))
-
+    
+        self.glyph_cache[key] = (fb, gw, gh)
+    
         return fb, gw, gh
 
     def text(self, x, y, w, h, string, color, bg=0x0000, font_size=30):
@@ -655,7 +659,7 @@ class ST7796DisplayPSRAM:
         - cached 30px glyph rendering
         - fallback small font using framebuf.text
         """
-        if font_size != 30:
+        if font_size == 8:
             self.fb.fill_rect(x, y, w, h, bg)
             self.fb.text(string[:w // font_size], x, y, color)
             self._mark_dirty(x, y, w, h)
@@ -671,7 +675,7 @@ class ST7796DisplayPSRAM:
                 cy += line_h
                 continue
 
-            glyph_fb, gw, gh = self._get_glyph(ch)
+            glyph_fb, gw, gh = self._get_glyph(ch, font_size)
 
             if cx + gw > x + w:
                 cx = x

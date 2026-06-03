@@ -37,3 +37,8 @@ SD_PIN_SCK  = 12
 SD_PIN_MISO = 13
 SD_PIN_MOSI = 11
 SD_PIN_CS   = 10
+
+# GNSS module
+GNSS_PIN_TX = 7
+GNSS_PIN_RX = 6
+
