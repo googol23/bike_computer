@@ -4,7 +4,8 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 import json
 
-API_KEY = "88d08c34-2c7c-481f-a429-1f311593c0cd"
+from keys import GH_API_KEY
+
 class GraphHopperAPI:
     def __init__(self, url, api_key):
         self.url = url
@@ -179,7 +180,7 @@ class GraphHopperAPI:
         
 
 if __name__ == "__main__":
-    gh_api = GraphHopperAPI("https://graphhopper.com/api/1/route", API_KEY)
+    gh_api = GraphHopperAPI("https://graphhopper.com/api/1/route", GH_API_KEY)
     
     start_lat, start_lon = 49.901106,8.657435
     end_lat, end_lon = 50.085573,8.910603
