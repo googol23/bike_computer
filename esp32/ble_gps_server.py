@@ -48,7 +48,7 @@ class BLEGPSServer:
         while True:
             try:
                 event = await self.gps_char.written()
-                print("event:", event)
+                # print("event:", event)
                 
                 if isinstance(event, tuple) or isinstance(event, list):
                     data = event[-1]
@@ -56,12 +56,12 @@ class BLEGPSServer:
                     data = event
     
                 if len(data) != 20:
-                    print("bad packet size:", len(data))
+                    # print("bad packet size:", len(data))
                     continue
     
                 self.lat, self.lon, self.vel, self.direction, self.counter = struct.unpack("<ffffI", data)
     
-                print("Received:", self.lat, self.lon, self.vel, self.direction, self.counter)
+                # print("Received:", self.lat, self.lon, self.vel, self.direction, self.counter)
     
                 if self._callback:
                     self._callback(self.lat, self.lon, self.vel, self.direction)
