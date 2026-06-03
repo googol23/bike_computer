@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?><gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" creator="GraphHopper" version="1.1" xmlns:gh="https://graphhopper.com/public/schema/gpx/1.1">
+<metadata><copyright author="OpenStreetMap contributors"/><link href="http://graphhopper.com"><text>GraphHopper GPX</text></link><time>2026-06-01T16:06:26.956Z</time></metadata>
+<wpt lat="49.901082" lon="8.657573"></wpt>
+<wpt lat="49.843012" lon="8.660837"></wpt>
+<rte>
+<rtept lat="49.901082" lon="8.657573"><desc>Continue</desc><extensions><gh:distance>15.845</gh:distance><gh:time>9507</gh:time><gh:sign>0</gh:sign></extensions></rtept>
+<rtept lat="49.901220" lon="8.657630"><desc>Turn left onto Im Fiedlersee</desc><extensions><gh:distance>157.335</gh:distance><gh:time>35400</gh:time><gh:sign>-2</gh:sign></extensions></rtept>
+<rtept lat="49.901435" lon="8.655459"><desc>Continue onto Frankfurter Landstraße</desc><extensions><gh:distance>9.573</gh:distance><gh:time>2154</gh:time><gh:sign>0</gh:sign></extensions></rtept>
+<rtept lat="49.901448" lon="8.655327"><desc>Turn left onto Frankfurter Landstraße</desc><extensions><gh:distance>146.276</gh:distance><gh:time>31603</gh:time><gh:sign>-2</gh:sign></extensions></rtept>
+<rtept lat="49.900224" lon="8.654855"><desc>Continue</desc><extensions><gh:distance>8.327</gh:distance><gh:time>1665</gh:time><gh:sign>0</gh:sign></extensions></rtept>
+<rtept lat="49.900168" lon="8.654777"><desc>Turn left</desc><extensions><gh:distance>1214.286</gh:distance><gh:time>275367</gh:time><gh:sign>-2</gh:sign></extensions></rtept>
+<rtept lat="49.889394" lon="8.652561"><desc>Keep right</desc><extensions><gh:distance>520.853</gh:distance><gh:time>117192</gh:time><gh:sign>7</gh:sign></extensions></rtept>
+<rtept lat="49.884761" lon="8.651527"><desc>Keep left</desc><extensions><gh:distance>7.334</gh:distance><gh:time>1467</gh:time><gh:sign>-7</gh:sign></extensions></rtept>
+<rtept lat="49.884697" lon="8.651552"><desc>Turn slight right onto Frankfurter Straße</desc><extensions><gh:distance>35.332</gh:distance><gh:time>7066</gh:time><gh:sign>1</gh:sign></extensions></rtept>
+<rtept lat="49.884389" lon="8.651433"><desc>Keep left onto Frankfurter Straße</desc><extensions><gh:distance>44.912</gh:distance><gh:time>8982</gh:time><gh:sign>-7</gh:sign></extensions></rtept>
+<rtept lat="49.883988" lon="8.651358"><desc>Turn sharp left onto Kasinostraße</desc><extensions><gh:distance>623.3</gh:distance><gh:time>124661</gh:time><gh:sign>-3</gh:sign></extensions></rtept>
+<rtept lat="49.883027" lon="8.659801"><desc>Turn right onto Pankratiusstraße</desc><extensions><gh:distance>3.086</gh:distance><gh:time>617</gh:time><gh:sign>2</gh:sign></extensions></rtept>
+<rtept lat="49.883001" lon="8.659784"><desc>Turn left</desc><extensions><gh:distance>31.645</gh:distance><gh:time>6329</gh:time><gh:sign>-2</gh:sign></extensions></rtept>
+<rtept lat="49.882891" lon="8.660190"><desc>Turn right onto Heinheimer Straße</desc><extensions><gh:distance>540.604</gh:distance><gh:time>108370</gh:time><gh:sign>2</gh:sign></extensions></rtept>
+<rtept lat="49.878083" lon="8.661281"><desc>Continue onto Heinheimer Straße</desc><extensions><gh:distance>509.457</gh:distance><gh:time>101565</gh:time><gh:sign>0</gh:sign></extensions></rtept>
+<rtept lat="49.873702" lon="8.662684"><desc>Keep right onto Pützerstraße</desc><extensions><gh:distance>498.739</gh:distance><gh:time>101130</gh:time><gh:sign>7</gh:sign></extensions></rtept>
+<rtept lat="49.869242" lon="8.662268"><desc>Keep right onto Nieder-Ramstädter Straße</desc><extensions><gh:distance>85.675</gh:distance><gh:time>18514</gh:time><gh:sign>7</gh:sign></extensions></rtept>
+<rtept lat="49.868615" lon="8.662844"><desc>Turn slight right onto Nieder-Ramstädter Straße</desc><extensions><gh:distance>315.339</gh:distance><gh:time>63929</gh:time><gh:sign>1</gh:sign></extensions></rtept>
+<rtept lat="49.866137" lon="8.664950"><desc>Turn right onto Herdweg</desc><extensions><gh:distance>69.464</gh:distance><gh:time>14456</gh:time><gh:sign>2</gh:sign></extensions></rtept>
+<rtept lat="49.865887" lon="8.664062"><desc>Turn left onto Roquetteweg</desc><extensions><gh:distance>583.448</gh:distance><gh:time>117994</gh:time><gh:sign>-2</gh:sign></extensions></rtept>
+<rtept lat="49.861138" lon="8.667461"><desc>Turn left onto Jahnstraße</desc><extensions><gh:distance>17.717</gh:distance><gh:time>3543</gh:time><gh:sign>-2</gh:sign></extensions></rtept>
+<rtept lat="49.861157" lon="8.667707"><desc>Turn right onto Nieder-Ramstädter Straße</desc><extensions><gh:distance>1004.57</gh:distance><gh:time>200913</gh:time><gh:sign>2</gh:sign></extensions></rtept>
+<rtept lat="49.852384" lon="8.670760"><desc>Turn right onto Klappacher Straße</desc><extensions><gh:distance>9.131</gh:distance><gh:time>1826</gh:time><gh:sign>2</gh:sign></extensions></rtept>
+<rtept lat="49.852367" lon="8.670636"><desc>Turn left</desc><extensions><gh:distance>15.164</gh:distance><gh:time>3211</gh:time><gh:sign>-2</gh:sign></extensions></rtept>
+<rtept lat="49.852240" lon="8.670635"><desc>Turn left</desc><extensions><gh:distance>20.881</gh:distance><gh:time>4698</gh:time><gh:sign>-2</gh:sign></extensions></rtept>
+<rtept lat="49.852106" lon="8.670823"><desc>Turn right</desc><extensions><gh:distance>36.589</gh:distance><gh:time>10454</gh:time><gh:sign>2</gh:sign></extensions></rtept>
+<rtept lat="49.851804" lon="8.670620"><desc>Turn right</desc><extensions><gh:distance>33.792</gh:distance><gh:time>10138</gh:time><gh:sign>2</gh:sign></extensions></rtept>
+<rtept lat="49.851837" lon="8.670152"><desc>Continue</desc><extensions><gh:distance>45.909</gh:distance><gh:time>12521</gh:time><gh:sign>0</gh:sign></extensions></rtept>
+<rtept lat="49.851821" lon="8.669517"><desc>Keep left onto Ludwigshöhpfad</desc><extensions><gh:distance>784.507</gh:distance><gh:time>283277</gh:time><gh:sign>-7</gh:sign></extensions></rtept>
+<rtept lat="49.845467" lon="8.666498"><desc>Keep left</desc><extensions><gh:distance>133.404</gh:distance><gh:time>44254</gh:time><gh:sign>-7</gh:sign></extensions></rtept>
+<rtept lat="49.844393" lon="8.667091"><desc>Turn sharp right onto Heinemannweg</desc><extensions><gh:distance>461.347</gh:distance><gh:time>144123</gh:time><gh:sign>3</gh:sign></extensions></rtept>
+<rtept lat="49.842660" lon="8.661453"><desc>Turn right onto Ludwigshöhpfad</desc><extensions><gh:distance>33.765</gh:distance><gh:time>7353</gh:time><gh:sign>2</gh:sign></extensions></rtept>
+<rtept lat="49.842961" lon="8.661395"><desc>Turn left</desc><extensions><gh:distance>4.775</gh:distance><gh:time>1433</gh:time><gh:sign>-2</gh:sign></extensions></rtept>
+<rtept lat="49.842980" lon="8.661335"><desc>Keep right</desc><extensions><gh:distance>20.01</gh:distance><gh:time>14742</gh:time><gh:sign>7</gh:sign></extensions></rtept>
+<rtept lat="49.843111" lon="8.661153"><desc>Turn left</desc><extensions><gh:distance>27.706</gh:distance><gh:time>24935</gh:time><gh:sign>-2</gh:sign></extensions></rtept>
+<rtept lat="49.843012" lon="8.660837"><desc>Arrive at destination</desc><extensions><gh:distance>0</gh:distance><gh:time>0</gh:time><gh:sign>4</gh:sign></extensions></rtept>
+</rte>
+<trk>
+<name>GraphHopper Track</name><desc></desc>
+<trkseg><trkpt lat="49.901082" lon="8.657573"><ele>132.6</ele></trkpt>
+<trkpt lat="49.901220" lon="8.657630"><ele>132.4</ele></trkpt>
+<trkpt lat="49.901291" lon="8.656722"><ele>132.0</ele></trkpt>
+<trkpt lat="49.901435" lon="8.655459"><ele>131.1</ele></trkpt>
+<trkpt lat="49.901448" lon="8.655327"><ele>131.0</ele></trkpt>
+<trkpt lat="49.901237" lon="8.655317"><ele>131.0</ele></trkpt>
+<trkpt lat="49.900666" lon="8.655191"><ele>131.0</ele></trkpt>
+<trkpt lat="49.900434" lon="8.655162"><ele>131.0</ele></trkpt>
+<trkpt lat="49.900399" lon="8.655141"><ele>131.0</ele></trkpt>
+<trkpt lat="49.900372" lon="8.655105"><ele>131.0</ele></trkpt>
+<trkpt lat="49.900297" lon="8.654936"><ele>131.0</ele></trkpt>
+<trkpt lat="49.900224" lon="8.654855"><ele>131.0</ele></trkpt>
+<trkpt lat="49.900168" lon="8.654777"><ele>131.0</ele></trkpt>
+<trkpt lat="49.900039" lon="8.654852"><ele>131.2</ele></trkpt>
+<trkpt lat="49.899863" lon="8.654905"><ele>131.1</ele></trkpt>
+<trkpt lat="49.899757" lon="8.654899"><ele>131.2</ele></trkpt>
+<trkpt lat="49.897970" lon="8.654509"><ele>132.0</ele></trkpt>
+<trkpt lat="49.896451" lon="8.654144"><ele>132.0</ele></trkpt>
+<trkpt lat="49.896140" lon="8.654072"><ele>131.9</ele></trkpt>
+<trkpt lat="49.894181" lon="8.653622"><ele>132.1</ele></trkpt>
+<trkpt lat="49.893692" lon="8.653540"><ele>133.0</ele></trkpt>
+<trkpt lat="49.892358" lon="8.653263"><ele>132.3</ele></trkpt>
+<trkpt lat="49.892184" lon="8.653227"><ele>129.1</ele></trkpt>
+<trkpt lat="49.892060" lon="8.653200"><ele>129.7</ele></trkpt>
+<trkpt lat="49.891890" lon="8.653160"><ele>134.4</ele></trkpt>
+<trkpt lat="49.891301" lon="8.653015"><ele>135.0</ele></trkpt>
+<trkpt lat="49.890398" lon="8.652830"><ele>132.9</ele></trkpt>
+<trkpt lat="49.890172" lon="8.652763"><ele>132.1</ele></trkpt>
+<trkpt lat="49.890059" lon="8.652673"><ele>132.0</ele></trkpt>
+<trkpt lat="49.889902" lon="8.652596"><ele>132.0</ele></trkpt>
+<trkpt lat="49.889754" lon="8.652564"><ele>132.0</ele></trkpt>
+<trkpt lat="49.889452" lon="8.652563"><ele>131.9</ele></trkpt>
+<trkpt lat="49.889394" lon="8.652561"><ele>132.0</ele></trkpt>
+<trkpt lat="49.889305" lon="8.652558"><ele>132.0</ele></trkpt>
+<trkpt lat="49.888782" lon="8.652490"><ele>132.0</ele></trkpt>
+<trkpt lat="49.885451" lon="8.651736"><ele>134.0</ele></trkpt>
+<trkpt lat="49.885026" lon="8.651632"><ele>134.0</ele></trkpt>
+<trkpt lat="49.884888" lon="8.651580"><ele>134.0</ele></trkpt>
+<trkpt lat="49.884761" lon="8.651527"><ele>134.0</ele></trkpt>
+<trkpt lat="49.884697" lon="8.651552"><ele>134.3</ele></trkpt>
+<trkpt lat="49.884389" lon="8.651433"><ele>135.0</ele></trkpt>
+<trkpt lat="49.883988" lon="8.651358"><ele>135.0</ele></trkpt>
+<trkpt lat="49.884017" lon="8.651583"><ele>135.0</ele></trkpt>
+<trkpt lat="49.884072" lon="8.652731"><ele>136.0</ele></trkpt>
+<trkpt lat="49.884080" lon="8.653748"><ele>136.0</ele></trkpt>
+<trkpt lat="49.884020" lon="8.654833"><ele>136.5</ele></trkpt>
+<trkpt lat="49.883982" lon="8.655212"><ele>137.0</ele></trkpt>
+<trkpt lat="49.883874" lon="8.655986"><ele>137.0</ele></trkpt>
+<trkpt lat="49.883799" lon="8.656348"><ele>137.0</ele></trkpt>
+<trkpt lat="49.883538" lon="8.657391"><ele>138.0</ele></trkpt>
+<trkpt lat="49.883140" lon="8.659270"><ele>139.1</ele></trkpt>
+<trkpt lat="49.883027" lon="8.659801"><ele>140.0</ele></trkpt>
+<trkpt lat="49.883001" lon="8.659784"><ele>140.0</ele></trkpt>
+<trkpt lat="49.882935" lon="8.660068"><ele>140.0</ele></trkpt>
+<trkpt lat="49.882891" lon="8.660190"><ele>140.0</ele></trkpt>
+<trkpt lat="49.882799" lon="8.660188"><ele>140.0</ele></trkpt>
+<trkpt lat="49.880115" lon="8.660794"><ele>145.0</ele></trkpt>
+<trkpt lat="49.879520" lon="8.660943"><ele>146.0</ele></trkpt>
+<trkpt lat="49.878900" lon="8.661114"><ele>148.1</ele></trkpt>
+<trkpt lat="49.878184" lon="8.661266"><ele>150.0</ele></trkpt>
+<trkpt lat="49.878083" lon="8.661281"><ele>150.4</ele></trkpt>
+<trkpt lat="49.877912" lon="8.661289"><ele>151.0</ele></trkpt>
+<trkpt lat="49.877836" lon="8.661300"><ele>151.6</ele></trkpt>
+<trkpt lat="49.876425" lon="8.661626"><ele>156.1</ele></trkpt>
+<trkpt lat="49.876330" lon="8.661674"><ele>156.4</ele></trkpt>
+<trkpt lat="49.876245" lon="8.661734"><ele>156.7</ele></trkpt>
+<trkpt lat="49.875890" lon="8.662093"><ele>159.0</ele></trkpt>
+<trkpt lat="49.875828" lon="8.662154"><ele>159.0</ele></trkpt>
+<trkpt lat="49.875616" lon="8.662328"><ele>160.2</ele></trkpt>
+<trkpt lat="49.875277" lon="8.662562"><ele>160.8</ele></trkpt>
+<trkpt lat="49.875097" lon="8.662658"><ele>160.9</ele></trkpt>
+<trkpt lat="49.874917" lon="8.662736"><ele>161.0</ele></trkpt>
+<trkpt lat="49.874730" lon="8.662793"><ele>160.7</ele></trkpt>
+<trkpt lat="49.874559" lon="8.662825"><ele>160.2</ele></trkpt>
+<trkpt lat="49.874468" lon="8.662823"><ele>160.0</ele></trkpt>
+<trkpt lat="49.874085" lon="8.662789"><ele>158.6</ele></trkpt>
+<trkpt lat="49.873702" lon="8.662684"><ele>157.0</ele></trkpt>
+<trkpt lat="49.873523" lon="8.662603"><ele>156.0</ele></trkpt>
+<trkpt lat="49.873086" lon="8.662523"><ele>154.2</ele></trkpt>
+<trkpt lat="49.872959" lon="8.662505"><ele>154.0</ele></trkpt>
+<trkpt lat="49.872694" lon="8.662478"><ele>154.0</ele></trkpt>
+<trkpt lat="49.872457" lon="8.662475"><ele>153.0</ele></trkpt>
+<trkpt lat="49.872173" lon="8.662500"><ele>152.9</ele></trkpt>
+<trkpt lat="49.872079" lon="8.662526"><ele>152.5</ele></trkpt>
+<trkpt lat="49.871833" lon="8.662494"><ele>152.0</ele></trkpt>
+<trkpt lat="49.870713" lon="8.662349"><ele>153.0</ele></trkpt>
+<trkpt lat="49.869915" lon="8.662246"><ele>157.0</ele></trkpt>
+<trkpt lat="49.869451" lon="8.662226"><ele>159.6</ele></trkpt>
+<trkpt lat="49.869310" lon="8.662244"><ele>160.0</ele></trkpt>
+<trkpt lat="49.869242" lon="8.662268"><ele>160.0</ele></trkpt>
+<trkpt lat="49.869122" lon="8.662283"><ele>160.2</ele></trkpt>
+<trkpt lat="49.869031" lon="8.662306"><ele>161.0</ele></trkpt>
+<trkpt lat="49.868669" lon="8.662673"><ele>161.3</ele></trkpt>
+<trkpt lat="49.868634" lon="8.662744"><ele>161.6</ele></trkpt>
+<trkpt lat="49.868615" lon="8.662844"><ele>161.8</ele></trkpt>
+<trkpt lat="49.868383" lon="8.663078"><ele>162.0</ele></trkpt>
+<trkpt lat="49.867577" lon="8.663903"><ele>164.4</ele></trkpt>
+<trkpt lat="49.867475" lon="8.663993"><ele>165.0</ele></trkpt>
+<trkpt lat="49.867172" lon="8.664247"><ele>166.0</ele></trkpt>
+<trkpt lat="49.867044" lon="8.664341"><ele>166.8</ele></trkpt>
+<trkpt lat="49.866840" lon="8.664483"><ele>167.0</ele></trkpt>
+<trkpt lat="49.866756" lon="8.664538"><ele>167.5</ele></trkpt>
+<trkpt lat="49.866137" lon="8.664950"><ele>170.1</ele></trkpt>
+<trkpt lat="49.865979" lon="8.664385"><ele>171.0</ele></trkpt>
+<trkpt lat="49.865887" lon="8.664062"><ele>172.3</ele></trkpt>
+<trkpt lat="49.862209" lon="8.666619"><ele>174.1</ele></trkpt>
+<trkpt lat="49.861702" lon="8.667082"><ele>175.1</ele></trkpt>
+<trkpt lat="49.861627" lon="8.667151"><ele>175.8</ele></trkpt>
+<trkpt lat="49.861408" lon="8.667350"><ele>176.4</ele></trkpt>
+<trkpt lat="49.861375" lon="8.667399"><ele>176.7</ele></trkpt>
+<trkpt lat="49.861295" lon="8.667432"><ele>176.9</ele></trkpt>
+<trkpt lat="49.861138" lon="8.667461"><ele>177.0</ele></trkpt>
+<trkpt lat="49.861157" lon="8.667707"><ele>177.0</ele></trkpt>
+<trkpt lat="49.859980" lon="8.667961"><ele>180.0</ele></trkpt>
+<trkpt lat="49.855281" lon="8.669116"><ele>186.3</ele></trkpt>
+<trkpt lat="49.854981" lon="8.669244"><ele>187.1</ele></trkpt>
+<trkpt lat="49.854088" lon="8.669774"><ele>189.0</ele></trkpt>
+<trkpt lat="49.852384" lon="8.670760"><ele>194.2</ele></trkpt>
+<trkpt lat="49.852367" lon="8.670636"><ele>194.1</ele></trkpt>
+<trkpt lat="49.852314" lon="8.670672"><ele>194.5</ele></trkpt>
+<trkpt lat="49.852301" lon="8.670668"><ele>194.6</ele></trkpt>
+<trkpt lat="49.852240" lon="8.670635"><ele>194.9</ele></trkpt>
+<trkpt lat="49.852203" lon="8.670738"><ele>195.1</ele></trkpt>
+<trkpt lat="49.852106" lon="8.670823"><ele>195.7</ele></trkpt>
+<trkpt lat="49.851804" lon="8.670620"><ele>197.0</ele></trkpt>
+<trkpt lat="49.851837" lon="8.670152"><ele>196.6</ele></trkpt>
+<trkpt lat="49.851847" lon="8.669743"><ele>194.5</ele></trkpt>
+<trkpt lat="49.851821" lon="8.669517"><ele>193.9</ele></trkpt>
+<trkpt lat="49.851779" lon="8.669374"><ele>193.1</ele></trkpt>
+<trkpt lat="49.851760" lon="8.669311"><ele>192.8</ele></trkpt>
+<trkpt lat="49.851432" lon="8.668951"><ele>192.2</ele></trkpt>
+<trkpt lat="49.851291" lon="8.668679"><ele>191.2</ele></trkpt>
+<trkpt lat="49.851114" lon="8.668221"><ele>191.2</ele></trkpt>
+<trkpt lat="49.851036" lon="8.668060"><ele>191.2</ele></trkpt>
+<trkpt lat="49.850904" lon="8.667846"><ele>191.2</ele></trkpt>
+<trkpt lat="49.850704" lon="8.667661"><ele>191.2</ele></trkpt>
+<trkpt lat="49.850387" lon="8.667497"><ele>191.3</ele></trkpt>
+<trkpt lat="49.850122" lon="8.667441"><ele>191.6</ele></trkpt>
+<trkpt lat="49.849739" lon="8.667360"><ele>193.4</ele></trkpt>
+<trkpt lat="49.849231" lon="8.667112"><ele>193.6</ele></trkpt>
+<trkpt lat="49.848800" lon="8.667143"><ele>196.7</ele></trkpt>
+<trkpt lat="49.848574" lon="8.667119"><ele>198.5</ele></trkpt>
+<trkpt lat="49.848389" lon="8.667099"><ele>199.2</ele></trkpt>
+<trkpt lat="49.848035" lon="8.666950"><ele>201.9</ele></trkpt>
+<trkpt lat="49.847697" lon="8.666664"><ele>206.1</ele></trkpt>
+<trkpt lat="49.847400" lon="8.666524"><ele>209.5</ele></trkpt>
+<trkpt lat="49.847164" lon="8.666469"><ele>212.1</ele></trkpt>
+<trkpt lat="49.846915" lon="8.666475"><ele>214.0</ele></trkpt>
+<trkpt lat="49.846503" lon="8.666604"><ele>215.0</ele></trkpt>
+<trkpt lat="49.846064" lon="8.666561"><ele>215.6</ele></trkpt>
+<trkpt lat="49.845749" lon="8.666571"><ele>216.1</ele></trkpt>
+<trkpt lat="49.845467" lon="8.666498"><ele>216.4</ele></trkpt>
+<trkpt lat="49.845291" lon="8.666435"><ele>217.2</ele></trkpt>
+<trkpt lat="49.845060" lon="8.666465"><ele>218.7</ele></trkpt>
+<trkpt lat="49.844505" lon="8.666917"><ele>222.9</ele></trkpt>
+<trkpt lat="49.844435" lon="8.667029"><ele>223.4</ele></trkpt>
+<trkpt lat="49.844393" lon="8.667091"><ele>223.9</ele></trkpt>
+<trkpt lat="49.844097" lon="8.665413"><ele>227.2</ele></trkpt>
+<trkpt lat="49.843601" lon="8.664249"><ele>231.8</ele></trkpt>
+<trkpt lat="49.843515" lon="8.664005"><ele>233.1</ele></trkpt>
+<trkpt lat="49.843515" lon="8.664005"><ele>233.1</ele></trkpt>
+<trkpt lat="49.843450" lon="8.663832"><ele>233.7</ele></trkpt>
+<trkpt lat="49.843184" lon="8.663329"><ele>236.0</ele></trkpt>
+<trkpt lat="49.843132" lon="8.663229"><ele>236.0</ele></trkpt>
+<trkpt lat="49.843035" lon="8.663026"><ele>236.2</ele></trkpt>
+<trkpt lat="49.842740" lon="8.662496"><ele>238.0</ele></trkpt>
+<trkpt lat="49.842664" lon="8.662335"><ele>238.8</ele></trkpt>
+<trkpt lat="49.842658" lon="8.662177"><ele>239.7</ele></trkpt>
+<trkpt lat="49.842647" lon="8.661845"><ele>240.0</ele></trkpt>
+<trkpt lat="49.842662" lon="8.661703"><ele>240.0</ele></trkpt>
+<trkpt lat="49.842666" lon="8.661579"><ele>240.0</ele></trkpt>
+<trkpt lat="49.842660" lon="8.661453"><ele>240.0</ele></trkpt>
+<trkpt lat="49.842721" lon="8.661441"><ele>240.0</ele></trkpt>
+<trkpt lat="49.842961" lon="8.661395"><ele>241.1</ele></trkpt>
+<trkpt lat="49.842980" lon="8.661335"><ele>241.6</ele></trkpt>
+<trkpt lat="49.843016" lon="8.661315"><ele>241.8</ele></trkpt>
+<trkpt lat="49.843111" lon="8.661153"><ele>242.0</ele></trkpt>
+<trkpt lat="49.843012" lon="8.660999"><ele>242.0</ele></trkpt>
+<trkpt lat="49.843002" lon="8.660851"><ele>241.9</ele></trkpt>
+<trkpt lat="49.843012" lon="8.660837"><ele>241.9</ele></trkpt>
+</trkseg></trk>
+</gpx>
