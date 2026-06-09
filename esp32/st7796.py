@@ -5,6 +5,13 @@ import time
 
 import framebuf
 
+import math
+
+try:
+    _isqrt = math.isqrt
+except AttributeError:
+    _isqrt = None
+    
 import arial16
 import arial24
 import arial30
@@ -614,6 +621,74 @@ class ST7796DisplayPSRAM:
             abs(x1 - x0) + 1,
             abs(y1 - y0) + 1
         )
+
+    def circle(self, cx:int, cy:int, r:int, color):
+        """
+        Draw a filled circle centered at (cx, cy) with radius r into the PSRAM framebuffer.
+
+        This implementation renders horizontal scanlines directly into self.fb (which
+        is PSRAM-backed). It avoids allocating any large temporary buffers and only
+        marks the clipped bounding box dirty once at the end.
+        Args:
+            cx (int): center x
+            cy (int): center y
+            r (int): radius (>= 0)
+            color (int): RGB565 color
+        """
+        if r <= 0:
+            return
+
+        w = self.w
+        h = self.h
+
+        # full bounding box for the circle
+        x0 = cx - r
+        y0 = cy - r
+        x1 = cx + r
+        y1 = cy + r
+
+        # clip bounding box to screen
+        clip_x0 = 0 if x0 < 0 else x0
+        clip_y0 = 0 if y0 < 0 else y0
+        clip_x1 = w - 1 if x1 >= w else x1
+        clip_y1 = h - 1 if y1 >= h else y1
+
+        # nothing to draw after clipping
+        if clip_x0 > clip_x1 or clip_y0 > clip_y1:
+            return
+
+        rr = r * r
+
+        # draw horizontal scanlines for each y in the circle
+        for dy in range(-r, r + 1):
+            py = cy + dy
+            if py < 0 or py >= h:
+                continue
+
+            val = rr - dy * dy
+            if val < 0:
+                continue
+
+            # integer sqrt if available; otherwise use float sqrt
+            dx = _isqrt(val) if _isqrt is not None else int(val ** 0.5)
+
+            left = cx - dx
+            right = cx + dx
+
+            # skip if span outside horizontal screen bounds
+            if right < 0 or left >= w:
+                continue
+
+            if left < 0:
+                left = 0
+            if right >= w:
+                right = w - 1
+
+            # write a single horizontal span (1-pixel tall rect) into the framebuffer
+            self.fb.fill_rect(left, py, right - left + 1, 1, color)
+
+        # mark the (clipped) bounding box dirty once
+        self._mark_dirty(clip_x0, clip_y0, clip_x1 - clip_x0 + 1, clip_y1 - clip_y0 + 1)
 
     def clear(self, color=0x0000):
         """

@@ -27,7 +27,15 @@ upload () {
 upload_dir () {
   dir="$1"
 
-  new_hash=$(find "$dir" -type f -exec sha256sum {} \; | sha256sum | awk '{print $1}')
+  new_hash=$(
+    find "$dir" \
+      -type d -name "__pycache__" -prune -o \
+      -type f -print \
+    | xargs sha256sum \
+    | sha256sum \
+    | awk '{print $1}'
+  )
+
   old_hash=$(grep "^$dir " "$state_file" | awk '{print $2}')
 
   if [ "$new_hash" != "$old_hash" ]; then
@@ -40,7 +48,14 @@ upload_dir () {
   fi
 }
 
-upload_dir routes
+upload mem.py
+upload config.py
+upload st7796.py
+upload bq25185.py
+upload led_status_manager.py
+upload ble_gps_server.py
+
+upload_dir gpx
 upload_dir nav_icons
 
 upload arial16.py
@@ -49,23 +64,14 @@ upload arial30.py
 upload arial48.py
 
 upload gnss.py
-
-upload arrow_sprites.py
-
-upload config.py
-upload led_status_manager.py
-upload bq25185.py
-upload mem.py
-upload timer.py
+upload main.py
 upload app.py
 upload hud.py
 upload widget.py
-upload ble_gps_server.py
+
+upload_dir routes
 upload route.py
-upload gpx_streamer.py
-upload st7796.py
-upload main.py
-upload navigation.py
+upload timer.py
 
 mpremote connect "$device" reset
 sleep 1

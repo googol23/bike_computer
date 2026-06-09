@@ -1,50 +1,11 @@
 import math
+import struct
+import os
+import hashlib
 
-EARTH_RADIUS = 6371000  # meters
+from gpx.utils import compute_file_hash, distance_2d_m
 
 
-def distance_2d_m(lat1, lon1, lat2, lon2):
-    if lat1 is None or lon1 is None or lat2 is None or lon2 is None:
-        return 0
-    
-    lat1 = math.radians(lat1)
-    lon1 = math.radians(lon1)
-    lat2 = math.radians(lat2)
-    lon2 = math.radians(lon2)
-
-    dlat = lat2 - lat1
-    dlon = lon2 - lon1
-
-    a = (
-        math.sin(dlat * 0.5) ** 2 +
-        math.cos(lat1) * math.cos(lat2) *
-        math.sin(dlon * 0.5) ** 2
-    )
-
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-
-    return EARTH_RADIUS * c
-
-def distance_3d_m(lat1, lon1, ele1, lat2, lon2, ele2):
-    
-    dlat = math.radians(lat2 - lat1)
-    dlon = math.radians(lon2 - lon1)
-
-    a = (math.sin(dlat / 2) ** 2 +
-         math.cos(math.radians(lat1)) *
-         math.cos(math.radians(lat2)) *
-         math.sin(dlon / 2) ** 2)
-    
-
-    ground = 2 * EARTH_RADIUS * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-
-    delev = (ele2 - ele1)
-
-    dist = math.sqrt(ground * ground + delev * delev)
-
-    return dist
-
-    
 class GPXStreamReader:
     """
     Lightweight streaming GPX reader for ESP32.
@@ -57,6 +18,11 @@ class GPXStreamReader:
         self.file_path = file_path
         print(f"Opening GPX file: {file_path}")
         self.file = open(file_path, "r", encoding="utf-8")
+
+        self._route_cursor = 0
+        self._route_cursor = 0
+        self._navigation_cursor = 0
+        
 
         self._in_trkpt = False
 
@@ -73,6 +39,99 @@ class GPXStreamReader:
     # ----------------------------
     # internal parsing helpers
     # ----------------------------
+    def parse_attr(self,line, key) -> str | None:
+        k = key + '="'
+        i = line.find(k)
+        if i < 0:
+            return None
+        i += len(k)
+        j = line.find('"', i)
+        if j < 0:
+            return None
+        return line[i:j]
+    
+    
+    def parse_tag(self, line, tag) -> str | None:
+        a = "<" + tag + ">"
+        b = "</" + tag + ">"
+        i = line.find(a)
+        j = line.find(b)
+        if i < 0 or j < 0:
+            return None
+        return line[i + len(a):j]
+
+    def build_route_cache(self):
+        lats = []
+        lons = []
+        elvs = []
+
+        for line in self.file:
+
+            if "<trkpt" not in line and "<trkpt" not in line:
+                continue
+
+            lat = self.parse_attr(line, "lat")
+            lon = self.parse_attr(line, "lon")
+            elev = self.parse_tag(line, "ele")
+
+            if lat is None or lon is None:
+                continue
+
+            lats.append(int(float(lat) * 1e7))
+            lons.append(int(float(lon) * 1e7))
+
+
+            if elev is not None:
+                elev = int(float(elev))
+                elvs.append(elev)
+            else:
+                elvs.append(0)
+
+        return lats, lons, elvs
+        
+    def _next_navigation_point(self) -> dict:
+        self.file.seek(self._navigation_cursor)
+        current: dict | None = None
+
+        for raw in self.file:
+            line = raw.strip()
+            
+            if "<rtept" in line and "</rtept>" in line:
+                lat = self._parse_float_attr(line, "lat")
+                lon = self._parse_float_attr(line, "lon")
+
+                if lat is None or lon is None:
+                    continue
+                    
+                current = {
+                    "lat": lat,
+                    "lon": lon,
+                }
+
+                if "<desc>" in line and "</desc>" in line:
+                    desc = line[line.index("<desc>") + 6:line.index("</desc>")]
+                    current["desc"] = desc
+    
+                if "<desc>" in line and "</desc>" in line:
+                    dist = line[line.index("<dist>") + 6:line.index("</dist>")]
+                    current["dist"] = dist
+    
+                if "<gh:dist>" in line and "</gh:dist>" in line:
+                    dist = line[line.index("<gh:dist>") + 6:line.index("</gh:dist>")]
+                    current["dist"] = dist
+
+                if "<gh:sign>" in line and "</gh:sign>" in line:
+                    sign = line[line.index("<gh:sign>") + 6:line.index("</gh:sign>")]
+                    current["sign"] = sign
+
+                self._navigation_cursor = 0
+                return current
+
+        
+            
+
+                    
+
     def load_navigation(self):
         print("[NAV] Loading navigation (ESP32 mode)...")
     
@@ -142,7 +201,7 @@ class GPXStreamReader:
         self.file.seek(0)
         print(f"[NAV] DONE. {len(self.nav_pts)} instructions loaded")
         
-    def _parse_float_attr(self, line, key):
+    def _parse_float_attr(self, line, key) -> float | None:
         idx = line.find(key + '="')
         if idx == -1:
             return None
@@ -349,20 +408,3 @@ class GPXStreamReader:
             self.file.close()
 
 
-
-if __name__ == "__main__":
-    streamer = GPXStreamReader("routes/arheilgen_to_ludwigsturm.gpx")
-
-    # 
-    # while True:
-    #     points = streamer.next_points(5)
-
-    #     print(points, "\n")
-        
-    #     if not points:
-    #         break
-        
-    streamer.load_navigation()
-    for pt in streamer.nav_pts:
-        print(pt)
-        

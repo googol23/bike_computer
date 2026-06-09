@@ -1,11 +1,12 @@
 import asyncio
+
 import mem
 
-from ble_gps_server import BLEGPSServer
 from hud import Hud
+from gpx.streamer import GPXStreamer
 from route import Route
-from widget import ValueWidget, CoordinateWidget, TimerWidget, RouteWidget, ElevationWidget, AreaWidget, NavigationWidget
-from gpx_streamer import distance_3d_m, distance_2d_m
+from widget import ValueWidget, TimerWidget, NavigationWidget
+from gpx.utils import distance_2d_m
 
 import timer
 
@@ -16,6 +17,9 @@ def distance_formater(value):
     if value is None:
         return "N/A"
 
+    if value < 10:
+        return f"{value:.3f}"
+        
     if value < 100:
         return f"{value:.2f}"
 
@@ -30,12 +34,6 @@ class AppManager:
         self.charger = charger
         self.gnss_module = gnss_module
         
-        # BLE
-        mem.usage("waking up BLE")
-        self.ble = BLEGPSServer()
-        self.ble.set_callback(self.on_gpx)
-        mem.usage("BLE alive")
-
         # Route
         self.route = Route()
         self._last_lat = None
@@ -133,7 +131,7 @@ class AppManager:
     # GPX callback
     # -----------------------------
     def on_gpx(self, lat, lon, vel, die):        
-
+        print(lat, lon, vel)
         if not self.timer.is_running():
             return
         
@@ -220,7 +218,29 @@ class AppManager:
         
         # asyncio.create_task(self.ble.run())
         asyncio.create_task(self._ui_loop())
-        asyncio.create_task(self._gnss_loop())
+        # asyncio.create_task(self._gnss_loop())
+        asyncio.create_task(self.gnss_sim_loop())
 
         while True:
             await asyncio.sleep(1)
+
+    async def gnss_sim_loop(self):
+        gnss_sim = GPXStreamer("routes/arheilgen_to_ludwigsturm.gpx")
+        for i in range(gnss_sim.rcb.n-1):
+            lat_0, lon_0, _ = gnss_sim.get_point(i)
+            lat_1, lon_1, _ = gnss_sim.get_point(i+1)
+
+            for t in range(3):
+                
+                lat = (lat_1 - lat_0) * t / 4 + lat_0
+                lon = (lon_1 - lon_0) * t / 4 + lon_0
+                
+                self.on_gpx(lat,lon, 25, 3)
+    
+                await asyncio.sleep(0.1)
+
+
+        
+
+        
+        

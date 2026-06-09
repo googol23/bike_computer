@@ -1,7 +1,7 @@
 import asyncio
 
-import bq25185
 import config
+import bq25185
 
 # from machine import Pin, SPI
 # import os
@@ -17,10 +17,12 @@ import config
 # with open("/sd/test.txt", "r") as f:
 #     print(f.read())
 # print(os.listdir("/sd"))
+# 
 import gnss
 from app import TFT_HEIGHT, TFT_WIDTH, AppManager
 from led_status_manager import LEDState, LEDStatusManager
 from st7796 import ST7796Display, ST7796DisplayPSRAM
+# from dummy_display import SimulatedDisplay
 
 async def main():
 
@@ -44,6 +46,7 @@ async def main():
     display = ST7796DisplayPSRAM(TFT_WIDTH, TFT_HEIGHT)
     display.clear(0xFFFFFF)
     display.set_backlight(50)
+    # display = SimulatedDisplay(TFT_WIDTH, TFT_HEIGHT, "render_debug")
 
     led.set_state(LEDState.READY)
 
@@ -59,3 +62,10 @@ async def main():
 
 
 asyncio.run(main())
+# 
+## Diagnostic helper — run on your device / in the same environment
+# from gpx.navigation import NavigationStreamer
+
+# nstream = NavigationStreamer("routes/arheilgen_to_ludwigsturm.gpx")
+# nstream.load(prefer_cache=True)
+# nstream.print_nav_summary()
