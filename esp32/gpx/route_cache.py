@@ -3,7 +3,9 @@ import os
 from .utils import compute_file_hash, distance_2d_m
 
 
-HEADER_FMT = "<I"
+
+RTE_HEADER_FMT = "<IiiHiiHhh"
+RTE_HEADER_SIZE = struct.calcsize(RTE_HEADER_FMT)
 RTE_POINT_FMT  = "<iiH"   # lat, lon, elev
 RTE_POINT_SIZE = struct.calcsize(RTE_POINT_FMT)
 
@@ -13,6 +15,20 @@ MAX_DESC_LEN = 0xFFFF  # must fit uint16
 NAV_HEADER_FMT = "<I"
 NAV_RECORD_HDR_SIZE = struct.calcsize(NAV_RECORD_FMT)
 NAV_HEADER_SIZE = struct.calcsize(NAV_HEADER_FMT)
+
+CACHE_META = {
+    "version": 1,
+    "rte_header": RTE_HEADER_FMT,
+    "rte_point": RTE_POINT_FMT,
+    "nav_record": NAV_RECORD_FMT,
+}
+def cache_signature():
+    return (
+        str(CACHE_META["version"]) + "|" +
+        CACHE_META["rte_header"] + "|" +
+        CACHE_META["rte_point"] + "|" +
+        CACHE_META["nav_record"]
+    )
 
 class RouteCache:
 
@@ -203,7 +219,8 @@ class RouteCache:
 
         # compute hash for GPX (so we can invalidate cache later)
         try:
-            gp_hash = compute_file_hash(gpx_path)
+            meta_hash = compute_file_hash(cache_signature())
+            gp_hash = compute_file_hash(gpx_path + meta_hash)
         except Exception as e:
             print(f"[WARN] could not compute hash for {gpx_path}: {e}")
             gp_hash = ""
@@ -213,8 +230,18 @@ class RouteCache:
         fout = open(bin_out, "wb")
 
         # reserve header
-        fout.write(struct.pack("<I", 0))
+        fout.write(b"\x00" * RTE_HEADER_SIZE)
         count = 0
+        start_lat_i = 0
+        start_lon_i = 0
+        start_elv_i = 0
+        
+        end_lat_i = 0
+        end_lon_i = 0
+        end_elv_i = 0
+        
+        min_elv = 32767
+        max_elv = -32768
 
         for line in fin:
             if "<trkpt" not in line:
@@ -231,12 +258,38 @@ class RouteCache:
             lon_i = int(lon * 1e7)
             ele_i = int(ele) if ele is not None else 0
 
+            if count == 0:
+                start_lat_i = lat_i
+                start_lon_i = lon_i
+                start_elv_i = ele_i
+            
+            end_lat_i = lat_i
+            end_lon_i = lon_i
+            end_elv_i = ele_i
+            
+            min_elv = min(min_elv, ele_i)
+            max_elv = max(max_elv, ele_i)
+
             fout.write(struct.pack(RTE_POINT_FMT, lat_i, lon_i, ele_i))
             count += 1
 
         fin.close()
         fout.seek(0)
-        fout.write(struct.pack("<I", count))
+        
+        fout.write(
+            struct.pack(
+                RTE_HEADER_FMT,
+                count,
+                start_lat_i,
+                start_lon_i,
+                start_elv_i,
+                end_lat_i,
+                end_lon_i,
+                end_elv_i,
+                min_elv,
+                max_elv,
+            )
+        )
         fout.close()
 
         # --- build .nav (rtept) ---
@@ -335,13 +388,38 @@ class RouteCacheBinary:
         self.bin_file = None
         self.n = 0
 
+    def __str__(self):
+        return f"""RouteCacheBinary(
+        n={self.n},
+        start_lat={self.start_lat},
+        start_lon={self.start_lon},
+        end_lat={self.end_lat},
+        end_lon={self.end_lon}
+        min_elv={self.min_elv},
+        max_elv={self.max_elv},
+        )
+        """
+
     def load_route(self, bin_path):
         self.bin_file = open(bin_path, "rb")
-        header = self.bin_file.read(4)
-        self.n = struct.unpack("<I", header)[0]
+        header = self.bin_file.read(RTE_HEADER_SIZE)
+        
+        (
+            self.n,
+            self.start_lat,
+            self.start_lon,
+            self.start_elv,
+            self.end_lat,
+            self.end_lon,
+            self.end_elv,
+            self.min_elv,
+            self.max_elv,
+        ) = struct.unpack(RTE_HEADER_FMT, header)
+
+        print(self.__str__())
 
     def get_point(self, i) -> tuple[int, int, int]:
-        offset = 4 + i * RTE_POINT_SIZE
+        offset = RTE_HEADER_SIZE + i * RTE_POINT_SIZE
         self.bin_file.seek(offset)
         data = self.bin_file.read(RTE_POINT_SIZE)
 

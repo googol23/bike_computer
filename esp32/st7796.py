@@ -690,6 +690,50 @@ class ST7796DisplayPSRAM:
         # mark the (clipped) bounding box dirty once
         self._mark_dirty(clip_x0, clip_y0, clip_x1 - clip_x0 + 1, clip_y1 - clip_y0 + 1)
 
+    def triangle_up(self, cx, cy, size, color):
+        h = int(size * 0.8660254)  # sqrt(3)/2
+
+        x1, y1 = cx,         cy - size
+        x2, y2 = cx - h,     cy + size // 2
+        x3, y3 = cx + h,     cy + size // 2
+
+        self.line(x1, y1, x2, y2, color)
+        self.line(x2, y2, x3, y3, color)
+        self.line(x3, y3, x1, y1, color)
+
+    def triangle_down(self, cx, cy, size, color):
+        h = int(size * 0.8660254)
+
+        x1, y1 = cx,         cy + size
+        x2, y2 = cx - h,     cy - size // 2
+        x3, y3 = cx + h,     cy - size // 2
+
+        self.line(x1, y1, x2, y2, color)
+        self.line(x2, y2, x3, y3, color)
+        self.line(x3, y3, x1, y1, color)
+
+    def triangle_left(self, cx, cy, size, color):
+        h = int(size * 0.8660254)
+
+        x1, y1 = cx - size,  cy
+        x2, y2 = cx + size // 2, cy - h
+        x3, y3 = cx + size // 2, cy + h
+
+        self.line(x1, y1, x2, y2, color)
+        self.line(x2, y2, x3, y3, color)
+        self.line(x3, y3, x1, y1, color)
+
+    def triangle_right(self, cx, cy, size, color):
+        h = int(size * 0.8660254)
+
+        x1, y1 = cx + size,  cy
+        x2, y2 = cx - size // 2, cy - h
+        x3, y3 = cx - size // 2, cy + h
+
+        self.line(x1, y1, x2, y2, color)
+        self.line(x2, y2, x3, y3, color)
+        self.line(x3, y3, x1, y1, color)
+
     def clear(self, color=0x0000):
         """
         Clear full screen.

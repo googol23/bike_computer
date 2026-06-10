@@ -6,6 +6,7 @@ from .os_extensions import file_exists
 from .route_cache import RouteCache, RouteCacheBinary
 from .utils import compute_file_hash
 
+from .utils import distance_2d_m
 
 class GPXStreamer:
     """
@@ -78,6 +79,99 @@ class GPXStreamer:
         self.rcb.load_route(self.bin_path)
 
         self.gpx_pts:list[tuple[float,float,float]] = []
+        self.elevation_profile: list[tuple[float, float]] = []
+
+        self.is_cache_valid = False
+
+
+    def closest_segment_endpoint(self, lat, lon):
+        """
+        Returns:
+            idx_end,
+            end_lat,
+            end_lon,
+            dist2
+        """
+    
+        best_dist2 = 1e30
+        best_idx = -1
+
+        lat_i = lat*1e7
+        lon_i = lon*1e7
+
+        for i in range(self.rcb.n - 1):
+    
+            ax, ay, _ = self.rcb.get_point(i)
+            bx, by, _ = self.rcb.get_point(i + 1)
+    
+            abx = bx - ax
+            aby = by - ay
+    
+            apx = lat_i - ax
+            apy = lon_i - ay
+    
+            ab_len2 = abx * abx + aby * aby
+    
+            if ab_len2 == 0:
+                continue
+    
+            # projection factor
+            t = (apx * abx + apy * aby) / ab_len2
+    
+            # clamp to segment
+            if t < 0:
+                t = 0
+            elif t > 1:
+                t = 1
+    
+            # projected point on segment
+            proj_lat = ax + t * abx
+            proj_lon = ay + t * aby
+    
+            dx = lat_i - proj_lat
+            dy = lon_i - proj_lon
+    
+            dist2 = dx * dx + dy * dy
+    
+            if dist2 < best_dist2:
+                best_dist2 = dist2
+                best_idx = i + 1
+    
+        if best_idx < 0:
+            return None
+    
+        end_lat, end_lon, _ = self.rcb.get_point(best_idx)
+    
+        return (
+            best_idx,
+            end_lat,
+            end_lon,
+            best_dist2
+        )
+
+    def get_elevation_profile(self, full_route:bool = True) -> list[tuple[float, float]]:
+        if not self.is_cache_valid:
+            self.elevation_profile.clear()
+
+            d = 0
+            if not full_route:
+                for i, (lat, lon, elv) in enumerate(self.gpx_pts):
+                    last_lat, last_lon, _ = self.gpx_pts[0] if i == 0 else self.gpx_pts[i-1]
+                    d += distance_2d_m(last_lat, last_lon, lat, lon)
+                    self.elevation_profile.append((d,elv))
+            else:
+                self.elevation_profile.append((0,self.rcb.get_point(0)[2]))
+                for i in range(1,self.rcb.n):
+                    last_lat, last_lon, _ = self.rcb.get_point(i-1)
+                    lat, lon, elv = self.rcb.get_point(i)
+                    d += distance_2d_m(last_lat / 1e7, last_lon / 1e7, lat / 1e7, lon / 1e7)
+                    self.elevation_profile.append((d,elv))
+
+            self.is_cache_valid = True
+
+        return self.elevation_profile
+            
+            
 
     def stream_navigation(self) -> NavigationStreamer:
         """
@@ -137,6 +231,10 @@ class GPXStreamer:
             lat /= 1e7
             lon /= 1e7
         self.gpx_pts = self.rcb.get_next_d_km(lat, lon, d)[0]
+
+        # Invalidate elevation profile cache
+        self.is_cache_valid = False
+        
         return self.gpx_pts
 
 
