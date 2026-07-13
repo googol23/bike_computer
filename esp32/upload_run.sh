@@ -51,8 +51,11 @@ upload_dir () {
 upload mem.py
 upload config.py
 upload st7796.py
+upload st7796_psram.py
 upload bq25185.py
+upload xpt2046.py
 upload led_status_manager.py
+upload dev_controler/htu21/htu21.py
 upload ble_gps_server.py
 
 upload_dir gpx
@@ -63,6 +66,8 @@ upload arial24.py
 upload arial30.py
 upload arial48.py
 
+upload events.py
+upload alarms.py
 upload gnss.py
 upload main.py
 upload app.py

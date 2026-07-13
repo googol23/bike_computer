@@ -68,3 +68,9 @@ class Timer:
 
     def is_paused(self):
         return self._paused
+
+    def toggle_pause(self):
+        if self.is_paused():
+            self.resume()
+        else:
+            self.pause()
