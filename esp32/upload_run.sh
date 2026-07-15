@@ -48,35 +48,52 @@ upload_dir () {
   fi
 }
 
+# External libs
 upload mem.py
-upload config.py
+
+
+# Controlers and drivers
 upload st7796.py
 upload st7796_psram.py
 upload bq25185.py
 upload xpt2046.py
-upload led_status_manager.py
 upload dev_controler/htu21/htu21.py
-upload ble_gps_server.py
 
-upload_dir gpx
-upload_dir nav_icons
+# Configuration
+upload config.py
+upload settings.py
 
+# Fonts
 upload arial16.py
 upload arial24.py
 upload arial30.py
 upload arial48.py
 
-upload events.py
-upload alarms.py
-upload gnss.py
+
+# Data
+upload_dir routes
+upload_dir nav_icons
+
+# Main app
 upload main.py
 upload app.py
+
+# Custom libs
+# Navigation
+upload_dir gpx
+upload gnss.py
+# Interface
 upload hud.py
 upload widget.py
+upload touch_handler.py
+upload events.py
 
-upload_dir routes
+upload led_status_manager.py
+upload ble_gps_server.py
+upload alarms.py
 upload route.py
 upload timer.py
+
 
 mpremote connect "$device" reset
 sleep 1

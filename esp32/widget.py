@@ -3,6 +3,7 @@ from gpx.navigation import NavigationStreamer
 from gpx.streamer import GPXStreamer
 from gpx.utils import distance_2d_m, rdp
 from alarms import Alarm
+from events import EventType
 
 
 class Widget:
@@ -27,7 +28,7 @@ class Widget:
             return self.x <= point[0] <= self.x + self.w and self.y <= point[1] <= self.y + self.h
         return False
 
-    def touch_point(self, point: tuple[int,int]):
+    def handle_touch(self, point: tuple[int,int], event_type: EventType | None):
         pass
 
     def update(self, values):
@@ -219,10 +220,11 @@ class TimerWidget(Widget):
             self.ss_widget,
         ]
 
-    def touch_point(self, point):
+    def handle_touch(self, point, event_type):
         if self.timer:
-            print("Toggling timer...")
-            self.timer.toggle_pause()
+            if event_type == EventType.SINGLE_TAP:
+                print("Toggling timer...")
+                self.timer.toggle_pause()
     
     def update(self, values):
         if values is None or len(values) != 3:
@@ -320,7 +322,7 @@ class AlarmWidget(Widget):
             self.dirty = True
             self._show_next()
 
-    def touch_point(self, point):
+    def handle_touch(self, point, event_type):
         """
         Dismiss the currently displayed alarm.
         """
@@ -823,7 +825,7 @@ class NavigationWidget(Widget):
             self.nav_info_widget,
         ]
 
-    def touch_point(self, point):
+    def handle_touch(self, point, event_type):
         if not self.route_widget.contains_point(point):
             return
 

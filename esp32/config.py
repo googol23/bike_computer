@@ -1,3 +1,6 @@
+###############################
+#### PINOUT CONFIGURATION #####
+###############################
 # ESP32S3N16R8 DevC1
 # Shared SPI BUS for display integrated devices
 SPI_BUS_MISO = 11

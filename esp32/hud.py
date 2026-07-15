@@ -1,6 +1,7 @@
 from widget import Widget
 from st7796 import ST7796Display
 import mem
+from events import EventType
 
 class Hud:
     def __init__(self, display: ST7796Display):
@@ -10,11 +11,11 @@ class Hud:
     def add_widget(self, widget: Widget):
         self.widgets[widget.name] = widget
 
-    def touch_point(self, point: tuple[int,int]):
+    def handle_touch(self, point: tuple[int,int], event_type: EventType):
         for widget in self.widgets.values():
             if widget.contains_point(point):
                 print(f"Passing touched point {point} to  {widget.name}")
-                widget.touch_point(point)
+                widget.handle_touch(point, event_type)
         
     def render(self):
         for widget in self.widgets.values():

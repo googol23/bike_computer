@@ -10,6 +10,8 @@ from alarms import Alarm, AlarmsManager
 from gpx.utils import distance_2d_m
 
 from events import EventQueue, Event, EventType
+import settings
+from touch_handler import TouchHandler
 import timer
 
 TFT_WIDTH = 320
@@ -40,6 +42,8 @@ class AppManager:
         self.sensors = sensors
 
         self.event_queue = EventQueue(size=10)
+
+        self.touch_handler = TouchHandler(self.event_queue)
 
         # Alarms/Remainders
         self.alarms_manager = AlarmsManager([
@@ -294,33 +298,26 @@ class AppManager:
         if self.touch_gui is None:
             return
 
-        was_pressed = False
-       
         while True:
             point = self.touch_gui.get_point()
-            # print(point)
-            is_pressed = point is not None
     
-            # Trigger only on the initial press
-            if is_pressed and not was_pressed:
-                self.event_queue.post_touch(x=point[0], y=point[1])
+            self.touch_handler.update(point)
     
-            was_pressed = is_pressed
-    
-            await asyncio.sleep(0.05)
+            await asyncio.sleep_ms(settings.TOUCH_POLL_MS)
 
-                
     async def _event_loop(self):
         while True:
             event = self.event_queue.get()
     
             if event is None:
-                await asyncio.sleep(0.010)
+                await asyncio.sleep_ms(10)
                 continue
     
             try:
-                if event.type == EventType.TOUCH:
-                    self.hud.touch_point((event.x, event.y))
+                point = (event.x, event.y)
+    
+                if event.type in [EventType.SINGLE_TAP, EventType.DOUBLE_TAP, EventType.LONG_PRESS]:
+                    self.hud.handle_touch(point, event.type)
     
                 elif event.type == EventType.ALARM:
                     alarm = event.alarm
@@ -330,6 +327,9 @@ class AppManager:
                         self.hud.widgets["ALARMS"].activate(alarm)
     
                 elif event.type == EventType.BUTTON_PRESSED:
+                    pass
+    
+                elif event.type == EventType.CHARGING:
                     pass
     
             finally:
