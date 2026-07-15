@@ -83,6 +83,8 @@ class GPXStreamer:
 
         self.is_cache_valid = False
 
+        
+
 
     def closest_segment_endpoint(self, lat, lon):
         """
@@ -171,8 +173,6 @@ class GPXStreamer:
 
         return self.elevation_profile
             
-            
-
     def stream_navigation(self) -> NavigationStreamer:
         """
         Return a NavigationStreamer for this route. The streamer will load nav

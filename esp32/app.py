@@ -341,6 +341,10 @@ class AppManager:
                 t, h = self.sensors[0].read()
                 msg = f"DATA: \"temperature\": {t},humidity: {h}\n"
                 print(msg)
+
+                # if self.charger.is_charging():
+                #     self.event_queue.post_charging()
+                    
             except Exception as e:
                 pass
                 # print(f"Error reading sensor: {e}\n")

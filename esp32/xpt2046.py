@@ -1,4 +1,5 @@
 from machine import Pin, SPI
+import config
 
 
 class XPT2046:
@@ -8,32 +9,24 @@ class XPT2046:
 
     def __init__(
         self,
-        sck_pin,
-        mosi_pin,
-        miso_pin,
-        cs_pin,
-        irq_pin,
+        spi:SPI,
         width=320,
         height=480,
-        spi_id=2,
-        baudrate=1_000_000,
+        cs_pin=None,
+        irq_pin=None,
         swap_xy=False,
         invert_x=False,
         invert_y=False,
     ):
 
-        self.spi = SPI(
-            spi_id,
-            baudrate=baudrate,
-            polarity=0,
-            phase=0,
-            sck=Pin(sck_pin),
-            mosi=Pin(mosi_pin),
-            miso=Pin(miso_pin),
-        )
+        self.spi = spi
 
         self.cs = Pin(cs_pin, Pin.OUT, value=1)
         self.irq = Pin(irq_pin, Pin.IN, Pin.PULL_UP)
+
+        # Initialize the XPT2046 and leave PENIRQ enabled.
+        self._read(self.CMD_X)
+        self._read(self.CMD_Y)
 
         self.width = width
         self.height = height
@@ -48,7 +41,16 @@ class XPT2046:
         self.raw_y_min = 200
         self.raw_y_max = 3800
 
+    def _prepare_spi(self):
+        self.spi.init(
+            baudrate=config.TOUCH_SPI_BAUDRATE,
+            polarity=0,
+            phase=0,
+        )
+
     def _read(self, cmd):
+        self._prepare_spi()
+        
         self.cs.off()
         
         tx = bytearray([cmd, 0x00, 0x00])
@@ -61,6 +63,7 @@ class XPT2046:
         return ((rx[1] << 8) | rx[2]) >> 3
 
     def touched(self):
+        # print(self.irq.value())
         return self.irq is None or self.irq.value() == 0
 
     def get_raw(self):

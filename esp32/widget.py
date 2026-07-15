@@ -766,11 +766,17 @@ class NavigationInfoWidget(Widget):
 
 
 class NavigationWidget(Widget):
+    ROUTE_SCALES_KM = (0.05, 0.1, 0.5)
+    
     def __init__(self, name, x, y, w, h):
         super().__init__(name, x, y, w, h)
 
-        self.scale = 0.2
+        self.scale_index = 0
+        self.scale = self.ROUTE_SCALES_KM[self.scale_index]
 
+        self.last_lat = None
+        self.last_lon = None
+        
         self.streamer: GPXStreamer | None = None
         self.nav_streamer: NavigationStreamer | None = None
 
@@ -817,6 +823,18 @@ class NavigationWidget(Widget):
             self.nav_info_widget,
         ]
 
+    def touch_point(self, point):
+        if not self.route_widget.contains_point(point):
+            return
+
+        self.scale_index = (self.scale_index + 1) % len(self.ROUTE_SCALES_KM)
+
+        self.scale = self.ROUTE_SCALES_KM[self.scale_index]
+
+        print("Route scale changed to:", int(self.scale * 1000), "m")
+
+        self._reload_visible_route()
+
     def load_route(self, route_name):
         self.streamer = GPXStreamer("routes/" + route_name + ".gpx")
         self.streamer.get_next_d_km(None, None, self.scale)
@@ -831,9 +849,35 @@ class NavigationWidget(Widget):
 
         self.dirty = True
 
+    def _reload_visible_route(self):
+        if self.streamer is None:
+            return
+
+        # Use the latest GNSS position. Before the first GNSS update,
+        # get_next_d_km() starts from the beginning of the route.
+        self.streamer.get_next_d_km(
+            self.last_lat,
+            self.last_lon,
+            self.scale,
+        )
+
+        self.route_widget.project_to_screen()
+        self.elevation_widget.project_to_screen()
+
+        if self.last_lat is not None and self.last_lon is not None:
+            self.route_widget.update((self.last_lat, self.last_lon))
+            self.elevation_widget.update((self.last_lat, self.last_lon))
+
+        self.route_widget.dirty = True
+        self.elevation_widget.dirty = True
+        self.dirty = True
+
     def update(self, values):
         if values is not None:
             lat, lon = values
+
+            self.last_lat = lat
+            self.last_lon = lon
 
             print(f"Updating {self.name}")
 

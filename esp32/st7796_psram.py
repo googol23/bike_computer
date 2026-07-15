@@ -59,17 +59,13 @@ class ST7796DisplayPSRAM:
 
     def __init__(
         self,
-        width,
-        height,
+        width:int,
+        height:int,
+        spi:SPI,
         pin_cs=config.DISPLAY_PIN_CS,
         pin_rst=config.DISPLAY_PIN_RST,
         pin_dc=config.DISPLAY_PIN_DC,
-        pin_mosi=config.DISPLAY_PIN_MOSI,
-        pin_sck=config.DISPLAY_PIN_SCK,
-        pin_miso=config.DISPLAY_PIN_MISO,
         pin_led=config.DISPLAY_PIN_LED,
-        spi_id=2,
-        baudrate=40_000_000,
         rotation=0,
         invert=False,
         bgr=True,
@@ -84,6 +80,8 @@ class ST7796DisplayPSRAM:
         self.h = int(height)
         self.width = self.w
         self.height = self.h
+        
+        self.spi = spi
         self.x_offset = int(x_offset)
         self.y_offset = int(y_offset)
         self._glyph_cache_size = max(0, int(glyph_cache_size))
@@ -108,19 +106,6 @@ class ST7796DisplayPSRAM:
         self.led = PWM(Pin(pin_led), freq=1000)
         self.set_backlight(100)
 
-        spi_args = {
-            "baudrate": int(baudrate),
-            "polarity": 0,
-            "phase": 0,
-            "sck": Pin(pin_sck),
-            "mosi": Pin(pin_mosi),
-        }
-        # Some boards/panels do not wire MISO. Keep compatibility with the
-        # project's config while allowing pin_miso=None.
-        if pin_miso is not None:
-            spi_args["miso"] = Pin(pin_miso)
-        self.spi = SPI(spi_id, **spi_args)
-
         self._dirty = False
         self._dx0 = self.w
         self._dy0 = self.h
@@ -131,6 +116,13 @@ class ST7796DisplayPSRAM:
         self._bgr = bool(bgr)
         self._invert = bool(invert)
         self._init_display()
+
+    def _prepare_spi(self):
+        self.spi.init(
+            baudrate=config.DISPLAY_BAUDRATE,
+            polarity=0,
+            phase=0,
+        )
 
     # ------------------------------------------------------------------
     # Hardware and controller setup
@@ -279,6 +271,8 @@ class ST7796DisplayPSRAM:
         if not self._dirty:
             return 0
 
+        self._prepare_spi()
+
         x0, y0 = self._dx0, self._dy0
         x1, y1 = self._dx1, self._dy1
         t0 = time.ticks_ms()
@@ -309,6 +303,7 @@ class ST7796DisplayPSRAM:
     def flush_full(self):
         """Force one zero-copy full-screen transfer and return elapsed ms."""
         t0 = time.ticks_ms()
+        self._prepare_spi()
         self.set_window(0, 0, self.w - 1, self.h - 1)
         self.cs(0)
         self.dc(1)

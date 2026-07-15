@@ -3,6 +3,7 @@ class EventType:
     TOUCH = 1
     ALARM = 2
     BUTTON_PRESSED = 3
+    CHARGING = 4
 
 
 class Event:
@@ -91,6 +92,16 @@ class EventQueue:
 
         return True
 
+    def post_charging(self):
+        event = self._reserve()
+
+        if event is None:
+            return False
+
+        event.type = EventType.CHARGING
+
+        return True
+        
     def get(self):
         if self.empty():
             return None
