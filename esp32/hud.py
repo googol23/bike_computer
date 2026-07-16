@@ -14,7 +14,7 @@ class Hud:
     def handle_touch(self, point: tuple[int,int], event_type: EventType):
         for widget in self.widgets.values():
             if widget.contains_point(point):
-                print(f"Passing touched point {point} to  {widget.name}")
+                print(f"Passing touched point {point}({event_type}) to  {widget.name}")
                 widget.handle_touch(point, event_type)
         
     def render(self):

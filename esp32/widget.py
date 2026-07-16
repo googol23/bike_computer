@@ -1,10 +1,11 @@
+import os
+
 from arrow_sprites import ArrowSprites
 from gpx.navigation import NavigationStreamer
 from gpx.streamer import GPXStreamer
 from gpx.utils import distance_2d_m, rdp
 from alarms import Alarm
 from events import EventType
-
 
 class Widget:
     def __init__(self, name: str, x: int, y: int, w: int, h: int, value=None):
@@ -23,13 +24,19 @@ class Widget:
     def print(self):
         print(f"name={self.name}, x={self.x}, y={self.y}, w={self.w}, h={self.h}")
 
+    def _mark_all_dirty(self):
+        self.dirty = True
+        for w in self.widgets:
+            w._mark_all_dirty()
+        
     def contains_point(self, point: tuple[int,int] | None) -> bool:
         if point:
             return self.x <= point[0] <= self.x + self.w and self.y <= point[1] <= self.y + self.h
         return False
 
     def handle_touch(self, point: tuple[int,int], event_type: EventType | None):
-        pass
+        for w in self.widgets:
+            w.handle_touch(point, event_type)
 
     def update(self, values):
         if values != self.values:
@@ -46,6 +53,41 @@ class Widget:
 
         self.dirty = False
 
+class Buttom(Widget):
+    def __init__(self, name, x, y, w, h, on_push=None, color=None):
+        super().__init__(name, x, y, w, h)
+        self.on_push = on_push
+        self.color = color if color else 0xFFFF
+
+    def handle_touch(self, point, event_type):
+        if not self.contains_point(point):
+            return
+    
+        print(
+            "[DEBUG]",
+            self.name,
+            "pressed at",
+            point,
+            "bounds:",
+            self.x,
+            self.y,
+            self.w,
+            self.h,
+        )
+    
+        if self.on_push is not None:
+            self.on_push()
+
+
+    def render(self, display):
+        display.fill_rect(
+            self.x,
+            self.y,
+            self.w,
+            self.h,
+            self.color,
+        )
+        
 
 class AreaWidget(Widget):
     def __init__(self, name, x, y, w, h, color=0x0000):
@@ -62,12 +104,11 @@ class TextWidget(Widget):
         super().__init__(name, x, y, w, h)
         self.text = text
         self.font_size = font_size
-        
+
         self.padding = (self.h - font_size) // 2 if self.h > font_size else 0
         print(name, "using padding ", self.padding)
 
     def render(self, display):
-        # display.fill_rect(self.x, self.y, self.w, self.h, 0x0000)
         display.text(
             self.x + self.padding,
             self.y + self.padding,
@@ -225,32 +266,32 @@ class TimerWidget(Widget):
             if event_type == EventType.SINGLE_TAP:
                 print("Toggling timer...")
                 self.timer.toggle_pause()
-    
+
     def update(self, values):
         if values is None or len(values) != 3:
             return
-    
+
         h, m, s = values
         changed = False
-    
+
         if h != self._current_hh:
             self.hh_widget.text = f"{h:02d}:"
             self.hh_widget.dirty = True
             self._current_hh = h
             changed = True
-    
+
         if m != self._current_mm:
             self.mm_widget.text = f"{m:02d}:"
             self.mm_widget.dirty = True
             self._current_mm = m
             changed = True
-    
+
         if s != self._current_ss:
             self.ss_widget.text = f"{s:02d}"
             self.ss_widget.dirty = True
             self._current_ss = s
             changed = True
-    
+
         if changed:
             self.values = values
             self.dirty = True
@@ -293,11 +334,11 @@ class AlarmWidget(Widget):
     def _show_next(self):
         while self.pending_alarms:
             alarm = self.pending_alarms.pop(0)
-    
+
             if alarm.is_active():
                 self._show(alarm)
                 return
-    
+
         # Nothing pending. Only redraw if something was previously visible.
         if self.current_alarm is not None or self.visible:
             self.current_alarm = None
@@ -314,7 +355,7 @@ class AlarmWidget(Widget):
             if self.pending_alarms:
                 self._show_next()
             return
-    
+
         if self.current_alarm.has_expired():
             self.current_alarm.clear()
             self.current_alarm = None
@@ -373,7 +414,7 @@ class AlarmWidget(Widget):
 
         self.dirty = False
 
-    
+
 
 class CoordinateWidget(Widget):
     def __init__(self, name, x, y, w, h, value=None):
@@ -520,15 +561,15 @@ class ElevationWidget(Widget):
 
             self.screen_points.append((int(x), int(y)))
 
-        
+
         filtered = [self.screen_points[0]]
         for x, y in self.screen_points[1:]:
             px, py = filtered[-1]
-        
+
             if abs(x - px) >= 3 or abs(y - py) >= 3:
                 filtered.append((x, y))
         self.screen_points = filtered
-        
+
         print(f"Total number of points elevation profile{len(self.screen_points)}")
 
         return self.screen_points
@@ -685,7 +726,7 @@ class RouteWidget(Widget):
         return self.screen_points
 
     def render(self, display):
-        # print(f"Rendering {self.name}")
+
         display.fill_rect(self.x, self.y, self.w, self.h, 0x0000)
 
         for i in range(1, len(self.screen_points)):
@@ -769,7 +810,7 @@ class NavigationInfoWidget(Widget):
 
 class NavigationWidget(Widget):
     ROUTE_SCALES_KM = (0.05, 0.1, 0.5)
-    
+
     def __init__(self, name, x, y, w, h):
         super().__init__(name, x, y, w, h)
 
@@ -778,7 +819,7 @@ class NavigationWidget(Widget):
 
         self.last_lat = None
         self.last_lon = None
-        
+
         self.streamer: GPXStreamer | None = None
         self.nav_streamer: NavigationStreamer | None = None
 
@@ -806,11 +847,11 @@ class NavigationWidget(Widget):
             elevation_panel_w,
             elevation_panel_h,
         )
-        
+
         self.route_widget = RouteWidget(
             "route", route_panel_x, route_panel_y, route_panel_w, route_panel_h
         )
-        
+
         self.nav_info_widget = NavigationInfoWidget(
             "nav_info",
             nav_info_panel_x,
@@ -825,17 +866,63 @@ class NavigationWidget(Widget):
             self.nav_info_widget,
         ]
 
-    def handle_touch(self, point, event_type):
-        if not self.route_widget.contains_point(point):
+        # Ensure the area is clear at least the very first the widget is drawn
+        # or whenever the area is reaused by childern
+        self.clear_before_render = True
+
+        self.route_list = RouteListWidget("Route list", x, y, w, h)
+
+    def handle_touch(
+        self,
+        point: tuple[int, int],
+        event_type: EventType | None,
+    ):
+        if event_type == EventType.LONG_PRESS:
+            self.route_list.visible = not self.route_list.visible
+    
+            print(
+                "RouteList visibility changed to",
+                self.route_list.visible,
+            )
+    
+            if self.route_list.visible:
+                self.route_list.dirty = True
+            else:
+                print("Redrawing navigation after closing route list")
+                self._mark_all_dirty()
+                self.clear_before_render = True
+    
             return
+    
+        if self.route_list.visible:
+            print("Passing touch to route list")
+            self.route_list.handle_touch(point, event_type)
+    
+            if self.route_list.dirty:
+                self.dirty = True
+    
+            return
+    
+        if (
+            event_type == EventType.SINGLE_TAP
+            and self.route_widget.contains_point(point)
+        ):
+            self.scale_index = (
+                self.scale_index + 1
+            ) % len(self.ROUTE_SCALES_KM)
+    
+            self.scale = self.ROUTE_SCALES_KM[
+                self.scale_index
+            ]
+    
+            print(
+                "Route scale changed to:",
+                int(self.scale * 1000),
+                "m",
+            )
+    
+            self._reload_visible_route()
 
-        self.scale_index = (self.scale_index + 1) % len(self.ROUTE_SCALES_KM)
-
-        self.scale = self.ROUTE_SCALES_KM[self.scale_index]
-
-        print("Route scale changed to:", int(self.scale * 1000), "m")
-
-        self._reload_visible_route()
 
     def load_route(self, route_name):
         self.streamer = GPXStreamer("routes/" + route_name + ".gpx")
@@ -906,6 +993,22 @@ class NavigationWidget(Widget):
             self.dirty = True
 
     def render(self, display):
+        if self.route_list.visible:
+            return self.route_list.render(display)
+
+        if self.clear_before_render:
+            print("Clearing navigation widget background")
+    
+            display.fill_rect(
+                self.x,
+                self.y,
+                self.w,
+                self.h,
+                0xFFFF,
+            )
+    
+            self.clear_before_render = False
+
         super().render(display)
 
 
@@ -967,6 +1070,288 @@ def test_route_widget():
                 await asyncio.sleep(0.01)
 
     asyncio.run(gnss_sim_loop())
+
+
+class RouteListWidget(Widget):
+    def __init__(self, name, x, y, w, h, routes_folder:str = 'routes', on_route_selected=None):
+        super().__init__(name, x, y, w, h)
+
+        self.routes_folder = routes_folder
+        self.on_route_selected = on_route_selected
+
+        self.visible = False
+        self.routes = []
+
+        self.selected_index = 0
+        self.scroll_offset = 0
+
+
+        self.background_color = 0x0000
+        self.text_color = 0xFFFF
+        self.font_size = 30
+        self.padding = 5
+        self.row_height = self.font_size + 2*self.padding
+
+        self.current_page = 0
+
+        self.reload_routes()
+
+        self.dirty = True
+
+        buttom_h = 32
+        buttom_w = 32
+
+        self.buttom_prev = Buttom(
+            "ButtomPrevious",
+            self.x + self.padding,
+            self.y + self.h - self.padding - buttom_h,
+            buttom_w,
+            buttom_h,
+            on_push=self.previous_page)
+
+        self.buttom_next = Buttom(
+            "ButtomNext",
+            self.x + 2*self.padding + buttom_w,
+            self.y + self.h - self.padding - buttom_h,
+            buttom_w,
+            buttom_h,
+            on_push=self.next_page)
+
+        self.widgets = [
+            self.buttom_prev,
+            self.buttom_next            
+        ]
+
+    # def handle_touch(self, point: tuple[int, int], event_type: EventType | None):
+    #     if self.buttom_prev.contains(point):
+            
+    #     if event_type == EventType.DOUBLE_TAP:
+    #         self.next_page()
+
+    def previous_page(self):
+        routes_per_page = max(
+            1,
+            (self.h - 2 * self.padding) // self.row_height,
+        )
+    
+        page_count = (
+            len(self.routes) + routes_per_page - 1
+        ) // routes_per_page
+    
+        if page_count == 0:
+            return
+    
+        self.current_page = (
+            self.current_page - 1
+        ) % page_count
+    
+        self.dirty = True
+    
+        print(
+            "RouteListWidget: page",
+            self.current_page + 1,
+            "of",
+            page_count,
+        )
+        
+    def next_page(self):
+        routes_per_page = max(
+            1,
+            (self.h - 2 * self.padding) // self.row_height,
+        )
+    
+        page_count = (
+            len(self.routes) + routes_per_page - 1
+        ) // routes_per_page
+    
+        if page_count == 0:
+            return
+    
+        self.current_page = (
+            self.current_page + 1
+        ) % page_count
+    
+        self.dirty = True
+
+    def reload_routes(self):
+        self.routes.clear()
+
+        try:
+            filenames = os.listdir(self.routes_folder)
+        except OSError as exc:
+            print("Could not open routes folder:", exc)
+            self.dirty = True
+            return
+
+        for filename in filenames:
+            if filename.lower().endswith(".gpx"):
+                route_name = filename[:-4]
+                self.routes.append(route_name)
+
+        self.routes.sort()
+
+        if self.selected_index >= len(self.routes):
+            self.selected_index = 0
+
+        self.scroll_offset = 0
+        self.dirty = True
+
+    def open(self):
+        self.reload_routes()
+        self.visible = True
+        self.dirty = True
+
+    def close(self):
+        self.visible = False
+
+    def toggle(self):
+        if self.visible:
+            self.close()
+        else:
+            self.open()
+
+    def visible_row_count(self):
+        available_height = self.h - 2 * self.padding
+        return max(1, available_height // self.row_height)
+
+    def single_tap(self, point):
+        if not self.visible:
+            return
+
+        local_x = point[0] - self.x
+        local_y = point[1] - self.y
+
+        if (
+            local_x < 0
+            or local_x >= self.w
+            or local_y < 0
+            or local_y >= self.h
+        ):
+            self.close()
+            return
+
+        local_y -= self.padding
+
+        if local_y < 0:
+            return
+
+        visible_index = local_y // self.row_height
+        route_index = self.scroll_offset + visible_index
+
+        if 0 <= route_index < len(self.routes):
+            self.selected_index = route_index
+            route_name = self.routes[route_index]
+
+            print("Selected route:", route_name)
+
+            if self.on_route_selected is not None:
+                self.on_route_selected(route_name)
+
+            self.close()
+
+
+    def render(self, display):
+        if not self.visible or not self.dirty:
+            return
+        
+        display.fill_rect(
+            self.x,
+            self.y,
+            self.w,
+            self.h,
+            self.background_color,
+        )
+    
+        if self.routes is None:
+            print("RouteListWidget: routes is None")
+    
+            display.text(
+                self.x + self.padding,
+                self.y + self.padding,
+                self.w - 2 * self.padding,
+                self.row_height,
+                "Routes unavailable",
+                self.text_color,
+                bg=self.background_color,
+                font_size=self.font_size,
+            )
+    
+            self.dirty = False
+            return
+    
+        route_count = len(self.routes)
+    
+        if route_count == 0:
+            print(
+                "RouteListWidget: no routes found in",
+                self.routes_folder,
+            )
+    
+            display.text(
+                self.x + self.padding,
+                self.y + self.padding,
+                self.w - 2 * self.padding,
+                self.row_height,
+                "No routes found",
+                self.text_color,
+                bg=self.background_color,
+                font_size=self.font_size,
+            )
+    
+            self.dirty = False
+            return
+    
+        routes_per_page = max(
+            1,
+            (self.h - 2 * self.padding) // self.row_height,
+        )
+    
+        page_count = (
+            route_count + routes_per_page - 1
+        ) // routes_per_page
+    
+        if self.current_page < 0:
+            self.current_page = 0
+    
+        if self.current_page >= page_count:
+            self.current_page = page_count - 1
+    
+        start_index = self.current_page * routes_per_page
+        end_index = min(
+            start_index + routes_per_page,
+            route_count,
+        )
+    
+        print(
+            "RouteListWidget: rendering page",
+            self.current_page + 1,
+            "of",
+            page_count,
+            "- routes",
+            start_index,
+            "to",
+            end_index - 1,
+        )
+    
+        y = self.y + self.padding
+    
+        for index in range(start_index, end_index):
+            display.text(
+                self.x + self.padding,
+                y,
+                self.w - 2 * self.padding,
+                self.row_height,
+                self.routes[index],
+                self.text_color,
+                bg=self.background_color,
+                font_size=self.font_size,
+            )
+    
+            y += self.row_height
+    
+        self.dirty = False
+
+        super().render(display)
 
 
 if __name__ == "__main__":

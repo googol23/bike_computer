@@ -47,12 +47,12 @@ class AppManager:
 
         # Alarms/Remainders
         self.alarms_manager = AlarmsManager([
-            Alarm(
-                name = "hydration",
-                period = 10,
-                osd_duration=8,
-                message="Drink Water!"
-            ),
+            # Alarm(
+            #     name = "hydration",
+            #     period = 10,
+            #     osd_duration=8,
+            #     message="Drink Water!"
+            # ),
             # Alarm(
             #     name = "food",
             #     period = 10,
