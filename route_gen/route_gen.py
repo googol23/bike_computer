@@ -9,8 +9,8 @@ import matplotlib.pyplot as plt
 # =========================
 # CONFIG
 # =========================
-ORS_API_KEY = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImQyOTM0NTQwZGMxYzQ1M2RhNzY4M2ViOGJkODI5YmRjIiwiaCI6Im11cm11cjY0In0="
-# ORS_API_KEY = "YOUR_API_KEY"
+
+ORS_API_KEY = "YOUR_API_KEY"
 
 start = (50.1109, 8.6821)   # lat, lon
 end   = (50.1200, 8.7000)
