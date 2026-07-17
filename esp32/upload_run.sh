@@ -84,9 +84,11 @@ upload_dir gpx
 upload gnss.py
 # Interface
 upload hud.py
-upload widget.py
 upload touch_handler.py
 upload events.py
+
+upload_dir widgets
+
 
 upload led_status_manager.py
 upload ble_gps_server.py

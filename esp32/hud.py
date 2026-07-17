@@ -1,4 +1,4 @@
-from widget import Widget
+from widgets.widget import Widget
 from st7796 import ST7796Display
 import mem
 from events import EventType

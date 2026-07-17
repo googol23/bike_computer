@@ -5,7 +5,14 @@ import mem
 from hud import Hud
 from gpx.streamer import GPXStreamer
 from route import Route
-from widget import ValueWidget, TimerWidget, NavigationWidget, AlarmWidget
+
+from widgets import (
+    ValueWidget,
+    TimerWidget,
+    NavigationWidget,
+    AlarmWidget,
+)
+
 from alarms import Alarm, AlarmsManager
 from gpx.utils import distance_2d_m
 
