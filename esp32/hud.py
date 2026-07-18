@@ -1,10 +1,10 @@
 from widgets.widget import Widget
-from st7796 import ST7796Display
+from st7796_psram import ST7796DisplayPSRAM
 import mem
 from events import EventType
 
 class Hud:
-    def __init__(self, display: ST7796Display):
+    def __init__(self, display: ST7796DisplayPSRAM):
         self.widgets: dict[str,Widget] = {}
         self.display = display
 

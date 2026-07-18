@@ -543,3 +543,34 @@ class ST7796DisplayPSRAM:
             raise ValueError("logo must contain exactly %d RGB565 bytes" % expected)
         self.mark_full_dirty()
         return self.flush_full()
+
+    def text_width(self, string, font_size=30):
+        """Return the pixel width of the longest line."""
+        string = str(string)
+    
+        if font_size == 8:
+            return max(
+                (len(line) * 8 for line in string.split("\n")),
+                default=0,
+            )
+    
+        if font_size not in _FONT_MAP:
+            raise ValueError("font_size must be 8, 16, 24 or 30")
+    
+        spacing = 2
+        widest = 0
+    
+        for line in string.split("\n"):
+            line_width = 0
+    
+            for index, char in enumerate(line):
+                _, glyph_w, _, _ = self._get_glyph(char, font_size)
+    
+                if index > 0:
+                    line_width += spacing
+    
+                line_width += glyph_w
+    
+            widest = max(widest, line_width)
+    
+        return widest

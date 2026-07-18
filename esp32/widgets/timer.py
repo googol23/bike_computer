@@ -30,13 +30,9 @@ class TimerWidget(Widget):
         value_y_0 = self.y + FONT_SIZE + 10
         pad_size = 50
         time_x_0 = self.x + ((self.w - pad_size * 3) // 2)
-        self.hh_widget = TextWidget(("HH " + name), time_x_0, value_y_0, pad_size, 30)
-        self.mm_widget = TextWidget(
-            ("MM " + name), time_x_0 + pad_size, value_y_0, pad_size, 30
-        )
-        self.ss_widget = TextWidget(
-            ("SS " + name), time_x_0 + pad_size * 2, value_y_0, pad_size, 30
-        )
+        self.hh_widget = TextWidget(("HH " + name), time_x_0, value_y_0, pad_size, 30, padding=0)
+        self.mm_widget = TextWidget(("MM " + name), time_x_0 + pad_size, value_y_0, pad_size, 30, padding=0)
+        self.ss_widget = TextWidget(("SS " + name), time_x_0 + pad_size * 2, value_y_0, pad_size, 30, padding=0)
 
         h, m, s = self.values if len(self.values) == 3 else (0, 0, 0)
         self.hh_widget.text = f"{h:02d}:"

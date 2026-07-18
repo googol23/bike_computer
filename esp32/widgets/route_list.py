@@ -1,6 +1,7 @@
 
 from .widget import Widget
 from .buttom import Buttom
+from .text import TextWidget
 from .route_preview import RoutePreviewWidget
 
 from events import EventType
@@ -35,7 +36,7 @@ class RouteListWidget(Widget):
         self.padding = 5
         self.row_height = self.font_size + 2 * self.padding
 
-        button_w = 32
+        button_w = 16
         button_h = 32
 
         # Split the widget into list and preview panels.
@@ -61,6 +62,17 @@ class RouteListWidget(Widget):
 
         preview_panel_h = self.h
 
+        self.route_preview = RoutePreviewWidget(
+            "Route preview",
+            preview_panel_x,
+            preview_panel_y,
+            preview_panel_w,
+            preview_panel_h,
+        )
+
+        self.reload_routes()
+        self.dirty = True
+
         self.button_prev = Buttom(
             "ButtonPrevious",
             self.x + self.padding,
@@ -79,22 +91,23 @@ class RouteListWidget(Widget):
             on_push=self.next_page,
         )
 
-        self.route_preview = RoutePreviewWidget(
-            "Route preview",
-            preview_panel_x,
-            preview_panel_y,
-            preview_panel_w,
-            preview_panel_h,
+        self.page_index = TextWidget(
+            "PageIndex",
+            self.x + self.padding + button_w,
+            self.y + self.h - self.padding - button_h,
+            (self.list_panel_w - self.padding - button_w) - (self.x + self.padding + button_w),
+            button_h,
+            f"{self.current_page+1}/{self.page_count()}",
+            font_size=16,
+            align="center",
         )
-
+        
         self.widgets = [
             self.button_prev,
             self.button_next,
+            self.page_index,
             self.route_preview,
         ]
-
-        self.reload_routes()
-        self.dirty = True
 
     def routes_per_page(self):
         button_area_height = (
@@ -159,47 +172,37 @@ class RouteListWidget(Widget):
 
     def handle_touch(self, point, event_type):
         if not self.visible:
-            return False
+            return
 
         # Paging buttons have priority.
-        if self.button_prev.handle_touch(
-            point,
-            event_type,
-        ):
-            return True
+        self.button_prev.handle_touch(point, event_type)
+        self.button_next.handle_touch(point, event_type)
 
-        if self.button_next.handle_touch(
-            point,
-            event_type,
-        ):
-            return True
+        if event_type == EventType.SINGLE_TAP:
+            selected_index = self.get_item_at_point(
+                point
+            )
+    
+            if selected_index is None:
+                return
+    
+            self.selected_index = selected_index
+            route_name = self.routes[selected_index]
+    
+            print(
+                "RouteListWidget: selected route",
+                selected_index,
+                route_name,
+            )
+    
+            self.route_preview.set_route(route_name)
+    
+            self._mark_all_dirty()
 
-        if event_type != EventType.SINGLE_TAP:
-            return False
+        elif event_type == EventType.DOUBLE_TAP:
+            # Current route is loaded
+            self.on_route_selected(self.routes[selected_index])
 
-        selected_index = self.get_item_at_point(
-            point
-        )
-
-        if selected_index is None:
-            return False
-
-        self.selected_index = selected_index
-        route_name = self.routes[selected_index]
-
-        print(
-            "RouteListWidget: selected route",
-            selected_index,
-            route_name,
-        )
-
-        self.route_preview.set_route(route_name)
-
-        if self.on_route_selected is not None:
-            self.on_route_selected(route_name)
-
-        self.dirty = True
-        return True
 
     def next_page(self):
         page_count = self.page_count()
@@ -217,8 +220,11 @@ class RouteListWidget(Widget):
         self.selected_index = None
         self.route_preview.clear()
 
+
         self.dirty = True
         self.route_preview.dirty = True
+
+        self.page_index.set_text(f"{self.current_page+1}/{self.page_count()}")
 
         print(
             "RouteListWidget: page",
@@ -246,6 +252,8 @@ class RouteListWidget(Widget):
         self.dirty = True
         self.route_preview.dirty = True
 
+        self.page_index.set_text(f"{self.current_page+1}/{self.page_count()}")
+        
         print(
             "RouteListWidget: page",
             self.current_page + 1,

@@ -40,7 +40,9 @@ class ValueWidget(Widget):
             label_width_pxl,
             label_font_size+8,
             self.label,
-            8,
+            font_size=8,
+            padding=2,
+            align='center'
         )
 
         self.value_widget = TextWidget(
@@ -50,6 +52,9 @@ class ValueWidget(Widget):
             value_width_pxl,
             values_h,
             f"{self._last_value:.2f}",
+            font_size=30,
+            padding=0,
+            
         )
 
         self.units_widget = TextWidget(
@@ -59,7 +64,9 @@ class ValueWidget(Widget):
             units_width_pxl,
             label_font_size,
             self.units,
-            8,
+            font_size=8,
+            padding=0,
+            align='center'
         )
 
         self.widgets = [
