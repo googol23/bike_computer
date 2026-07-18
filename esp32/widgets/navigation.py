@@ -89,7 +89,8 @@ class NavigationWidget(Widget):
             )
     
             if self.route_list.visible:
-                self.route_list.dirty = True
+                self.dirty = True
+                self.route_list._mark_all_dirty()
             else:
                 print("Redrawing navigation after closing route list")
                 self._mark_all_dirty()
