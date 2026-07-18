@@ -8,6 +8,8 @@ from .route_list import RouteListWidget
 
 from gpx.navigation import NavigationStreamer
 from gpx.streamer import GPXStreamer
+from gpx.utils import distance_2d_m
+
 from events import EventType
 
 
@@ -166,35 +168,50 @@ class NavigationWidget(Widget):
         self.dirty = True
 
     def update(self, values):
-        if values is not None:
-            lat, lon = values
-
-            self.last_lat = lat
-            self.last_lon = lon
-
-            print(f"Updating {self.name}")
-
+        if values is None:
+            return
+    
+        lat, lon = values
+    
+        self.last_lat = lat
+        self.last_lon = lon
+    
+        self.route_widget.update((lat, lon))
+        self.elevation_widget.update((lat, lon))
+    
+        if (
+            self.nav_streamer is not None
+            and self.nav_streamer.update_position(lat, lon)
+        ):
+            print(
+                "New navigation instructions:",
+                self.nav_streamer.get_current(),
+            )
+            self.nav_info_widget.update(None)
+    
+        if (
+            self.streamer is not None
+            and self.streamer.gpx_pts
+            and distance_2d_m(
+                self.streamer.gpx_pts[-1][0],
+                self.streamer.gpx_pts[-1][1],
+                lat,
+                lon,
+            ) < 1
+        ):
+            self.streamer.get_next_d_km(
+                lat,
+                lon,
+                self.scale,
+            )
+    
+            self.route_widget.project_to_screen()
+            self.elevation_widget.project_to_screen()
+    
             self.route_widget.update((lat, lon))
             self.elevation_widget.update((lat, lon))
-
-            if self.nav_streamer.update_position(lat, lon):
-                print("New navigation instructions: ", self.nav_streamer.get_current())
-                self.nav_info_widget.update(None)
-
-            if (
-                self.streamer is not None
-                and distance_2d_m(
-                    self.streamer.gpx_pts[-1][0], self.streamer.gpx_pts[-1][1], lat, lon
-                )
-                < 1
-            ):
-                self.streamer.get_next_d_km(lat, lon, self.scale)
-
-                # Force update of screen points for route widget after new gpx section is called
-                self.route_widget.project_to_screen()
-                self.elevation_widget.project_to_screen()
-
-            self.dirty = True
+    
+        self.dirty = True
 
     def render(self, display):
         if self.route_list.visible:

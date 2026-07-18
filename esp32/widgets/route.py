@@ -1,7 +1,9 @@
 from .widget import Widget
+from .map_scale import MapScale
 from .location import LocationWidget
 
 from gpx.streamer import GPXStreamer
+from gpx.utils import distance_2d_m
 
 class RouteWidget(Widget):
     def __init__(
@@ -29,7 +31,19 @@ class RouteWidget(Widget):
 
         self.screen_points: list[tuple[int, int]] = self.project_to_screen()
 
-        self.widgets = [self.location_widget]
+        scale_width = max(1, w // 4)
+        self.map_scale = MapScale(
+            x + w - scale_width - 4,
+            y + 4,
+            scale_width,
+            30,
+            value=0,
+        )
+
+        self.widgets = [
+            self.location_widget,
+            self.map_scale
+        ]
 
     def set_streamer(self, streamer: GPXStreamer) -> None:
         self.streamer = streamer
@@ -49,6 +63,61 @@ class RouteWidget(Widget):
             self.location_widget.update((self.x + loc_x, self.y + loc_y))
 
             self.dirty = True
+
+    def update_map_scale(self) -> None:
+        ruler_width_px = max(1, self.map_scale.w - 1)
+    
+        ruler_distance_m = (
+            ruler_width_px
+            * self.meters_per_pixel_x()
+        )
+    
+        self.map_scale.set_scale(ruler_distance_m / 1000.0)
+    
+    def meters_per_pixel_x(self) -> float:
+        lon_range = self.max_lon - self.min_lon
+    
+        if lon_range <= 0 or self.scale <= 0:
+            return 0.0
+    
+        center_lat = (self.min_lat + self.max_lat) * 0.5
+    
+        distance_m = distance_2d_m(
+            center_lat,
+            self.min_lon,
+            center_lat,
+            self.max_lon,
+        )
+    
+        displayed_pixels = lon_range * self.scale
+    
+        if displayed_pixels <= 0:
+            return 0.0
+    
+        return distance_m / displayed_pixels
+    
+    
+    def meters_per_pixel_y(self) -> float:
+        lat_range = self.max_lat - self.min_lat
+    
+        if lat_range <= 0 or self.scale <= 0:
+            return 0.0
+    
+        center_lon = (self.min_lon + self.max_lon) * 0.5
+    
+        distance_m = distance_2d_m(
+            self.min_lat,
+            center_lon,
+            self.max_lat,
+            center_lon,
+        )
+    
+        displayed_pixels = lat_range * self.scale
+    
+        if displayed_pixels <= 0:
+            return 0.0
+    
+        return distance_m / displayed_pixels
 
     def project_point(self, lat, lon):
         """
@@ -109,6 +178,8 @@ class RouteWidget(Widget):
 
         self.screen_points = [self.project_point(lat, lon) for lat, lon, _ in pts]
 
+        self.update_map_scale()
+
         return self.screen_points
 
     def render(self, display):
@@ -121,5 +192,11 @@ class RouteWidget(Widget):
 
             display.line(self.x + x1, self.y + y1, self.x + x2, self.y + y2, 0xFFFFF)
 
+        # The background clear invalidated both child widgets.
+        self.location_widget.dirty = True
+        self.map_scale.dirty = True
+    
         self.location_widget.render(display)
+        self.map_scale.render(display)
+        
         self.dirty = False

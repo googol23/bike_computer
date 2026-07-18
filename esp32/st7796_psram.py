@@ -348,6 +348,55 @@ class ST7796DisplayPSRAM:
             abs(x1 - x0) + 1, abs(y1 - y0) + 1,
         )
 
+    def h_line(self, x, y, length, color):
+        """Draw a horizontal line extending right from (x, y)."""
+        x = int(x)
+        y = int(y)
+        length = int(length)
+    
+        if length <= 0 or y < 0 or y >= self.h:
+            return
+    
+        # Clip against the left edge.
+        if x < 0:
+            length += x
+            x = 0
+    
+        # Entire line is outside the right edge.
+        if x >= self.w or length <= 0:
+            return
+    
+        # Clip against the right edge.
+        length = min(length, self.w - x)
+    
+        self.fb.fill_rect(x, y, length, 1, color & 0xFFFF)
+        self._mark_dirty(x, y, length, 1)
+    
+    
+    def v_line(self, x, y, length, color):
+        """Draw a vertical line extending down from (x, y)."""
+        x = int(x)
+        y = int(y)
+        length = int(length)
+    
+        if length <= 0 or x < 0 or x >= self.w:
+            return
+    
+        # Clip against the top edge.
+        if y < 0:
+            length += y
+            y = 0
+    
+        # Entire line is outside the bottom edge.
+        if y >= self.h or length <= 0:
+            return
+    
+        # Clip against the bottom edge.
+        length = min(length, self.h - y)
+    
+        self.fb.fill_rect(x, y, 1, length, color & 0xFFFF)
+        self._mark_dirty(x, y, 1, length)
+
     def circle(self, cx, cy, radius, color):
         """Draw a filled circle."""
         radius = int(radius)
