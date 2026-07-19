@@ -57,10 +57,7 @@ class NavigationInfoWidget(Widget):
         ]
 
     def update(self, values):
-        if (
-            self.nav_streamer is not None
-            and self.nav_streamer.get_current() is not None
-        ):
+        if self.nav_streamer is not None and self.nav_streamer.get_current() is not None:
             self.desc.text = self.nav_streamer.get_current()["desc"]
             self.desc.dirty = True
             self.dirty = True
@@ -68,6 +65,9 @@ class NavigationInfoWidget(Widget):
     def render(self, display):
         super().render(display)
 
+        if self.nav_streamer is None:
+            return
+            
         sign = self.nav_streamer.get_current()["sign"]
 
         arrow = ArrowSprites(display, sign)

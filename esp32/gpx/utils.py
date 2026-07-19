@@ -141,12 +141,11 @@ def perpendicular_distance(px, py, x1, y1, x2, y2):
 
     return ((px - x)**2 + (py - y)**2) ** 0.5
 
-def rdp(pts, epsilon=0.0001) -> list:
-
+def rdp(pts, epsilon=1.0) -> list:
     n = len(pts)
 
     if n < 3:
-        return []
+        return pts[:]
 
     stack = [(0, n - 1)]
     keep = [False] * n
@@ -159,16 +158,20 @@ def rdp(pts, epsilon=0.0001) -> list:
         x1, y1, _ = pts[start]
         x2, y2, _ = pts[end]
 
-        dx = x2 - x1
-        dy = y2 - y1
-
         max_dist = -1.0
         index = start
 
         for i in range(start + 1, end):
             x, y, _ = pts[i]
 
-            d = perpendicular_distance(x, y, x1, y1, x2, y2)
+            d = perpendicular_distance(
+                x,
+                y,
+                x1,
+                y1,
+                x2,
+                y2,
+            )
 
             if d > max_dist:
                 max_dist = d
@@ -179,5 +182,8 @@ def rdp(pts, epsilon=0.0001) -> list:
             stack.append((start, index))
             stack.append((index, end))
 
-    return [pts[i] for i in range(n) if keep[i]]
-
+    return [
+        pts[i]
+        for i in range(n)
+        if keep[i]
+    ]

@@ -24,6 +24,7 @@ upload () {
   fi
 }
 
+
 upload_dir () {
   dir="$1"
 
@@ -53,7 +54,6 @@ upload mem.py
 
 
 # Controlers and drivers
-upload st7796.py
 upload st7796_psram.py
 upload bq25185.py
 upload xpt2046.py

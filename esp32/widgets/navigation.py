@@ -6,9 +6,11 @@ from .navigation_info import NavigationInfoWidget
 from .route_list import RouteListWidget
 
 
+
 from gpx.navigation import NavigationStreamer
 from gpx.streamer import GPXStreamer
 from gpx.utils import distance_2d_m
+from gpx.route_cache import RouteEntry
 
 from events import EventType
 
@@ -75,8 +77,18 @@ class NavigationWidget(Widget):
         # or whenever the area is reaused by childern
         self.clear_before_render = True
 
-        self.route_list = RouteListWidget("Route list", x, y, w, h)
+        self.route_list = RouteListWidget(
+            "Route list",
+            x,
+            y,
+            w,
+            h,
+            on_route_selected=self.start_navigation,
+        )
 
+    def start_navigation(self,route: RouteEntry):
+        self.load_route(route.gpx_path)    
+        
     def handle_touch(
         self,
         point: tuple[int, int],
@@ -130,15 +142,14 @@ class NavigationWidget(Widget):
             self._reload_visible_route()
 
 
-    def load_route(self, route_name):
-        self.streamer = GPXStreamer("routes/" + route_name + ".gpx")
-        self.streamer.get_next_d_km(None, None, self.scale)
+    def load_route(self, gpx_path):
+        self.streamer = GPXStreamer(gpx_path)
+        self.streamer.get_next_d_km(self.last_lat, self.last_lon, self.scale)
 
         self.nav_streamer = self.streamer.stream_navigation()
 
         self.route_widget.set_streamer(self.streamer)
         self.elevation_widget.set_streamer(self.streamer)
-
         self.nav_info_widget.nav_streamer = self.nav_streamer
         self.nav_info_widget.update(None)
 

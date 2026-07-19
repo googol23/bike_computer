@@ -3,6 +3,7 @@ from .widget import Widget
 from .buttom import Buttom
 from .text import TextWidget
 from .route_preview import RoutePreviewWidget
+from gpx.route_cache import RouteEntry, read_route_metadata, ensure_route_cache
 
 from events import EventType
 import os
@@ -24,7 +25,7 @@ class RouteListWidget(Widget):
         self.on_route_selected = on_route_selected
 
         self.visible = False
-        self.routes = []
+        self.routes: list[RouteEntry] = []
 
         self.selected_index = None
         self.current_page = 0
@@ -170,6 +171,33 @@ class RouteListWidget(Widget):
 
         return index
 
+    def select_route(self, index):
+        route = self.routes[index]
+    
+        print(
+            "RouteListWidget: selected route",
+            index,
+            route.name,
+        )
+    
+        if route.metadata is None:
+            route.metadata = ensure_route_cache(
+                route
+            )
+    
+        if route.metadata is None:
+            print(
+                "Could not load route:",
+                route.name,
+            )
+            return
+    
+        self.route_preview.set_route(
+            route_name=route.name,
+            route_info=route.metadata,
+            cache_path=route.cache_path,
+        )
+        
     def handle_touch(self, point, event_type):
         if not self.visible:
             return
@@ -187,7 +215,7 @@ class RouteListWidget(Widget):
                 return
     
             self.selected_index = selected_index
-            route_name = self.routes[selected_index]
+            route_name = self.routes[selected_index].name
     
             print(
                 "RouteListWidget: selected route",
@@ -195,14 +223,15 @@ class RouteListWidget(Widget):
                 route_name,
             )
     
-            self.route_preview.set_route(route_name)
+            self.select_route(self.selected_index)
     
             self._mark_all_dirty()
 
-        elif event_type == EventType.DOUBLE_TAP:
-            # Current route is loaded
-            self.on_route_selected(self.routes[selected_index])
-
+        elif event_type == EventType.DOUBLE_TAP and self.selected_index:
+            route = self.routes[self.selected_index]
+        
+            if self.on_route_selected is not None:
+                self.on_route_selected(route)
 
     def next_page(self):
         page_count = self.page_count()
@@ -261,51 +290,62 @@ class RouteListWidget(Widget):
             page_count,
         )
 
+    def load_routes(self):
+        self.routes = []
+    
+        try:
+            filenames = os.listdir("routes")
+        except Exception as e:
+            print("Failed to list routes:", e)
+            self.routes_loaded = True
+            return
+    
+        for filename in filenames:
+            if not filename.endswith(".gpx"):
+                continue
+    
+            route_name = filename[:-4]
+    
+            route = RouteEntry(
+                name=route_name,
+                gpx_path="/routes/" + filename,
+                cache_path="/cache/routes/" + route_name + ".bin"
+            )
+    
+            route.metadata = read_route_metadata(
+                route.cache_path,
+                route.name,
+            )
+    
+            self.routes.append(route)
+    
+        self.routes.sort(
+            key=lambda route: route.name.lower()
+        )
+    
+        self.routes_loaded = True
+        self.dirty = True
+            
     def reload_routes(self):
         self.routes.clear()
-
-        try:
-            filenames = os.listdir(
-                self.routes_folder
-            )
-        except OSError as error:
-            print(
-                "RouteListWidget: could not open",
-                self.routes_folder,
-                error,
-            )
-
-            self.current_page = 0
-            self.selected_index = None
-            self.dirty = True
-            return False
-
-        for filename in filenames:
-            if filename.lower().endswith(".gpx"):
-                self.routes.append(
-                    filename[:-4]
-                )
-
-        self.routes.sort()
-
-        self.current_page = 0
-        self.selected_index = None
-        self.route_preview.clear()
-
-        print(
-            "RouteListWidget:",
-            len(self.routes),
-            "routes found in",
-            self.routes_folder,
-        )
-
-        self.dirty = True
-        return True
+        self.load_routes()
 
     def open(self):
-        self.reload_routes()
+        if not self.routes_loaded:
+            self.load_routes()
+    
         self.visible = True
+        
         self._mark_all_dirty()
+
+    def refresh_routes(self):
+        self.routes = []
+        self.routes_loaded = False
+        self.selected_index = None
+    
+        self.load_routes()
+    
+        self.dirty = True
 
     def close(self):
         self.visible = False
@@ -392,7 +432,7 @@ class RouteListWidget(Widget):
                 self.list_panel_w
                 - 2 * self.padding,
                 self.row_height,
-                self.routes[index],
+                self.routes[index].name,
                 self.text_color,
                 bg=self.background_color,
                 font_size=self.font_size,

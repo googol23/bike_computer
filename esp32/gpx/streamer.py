@@ -3,7 +3,7 @@ import struct
 
 from .navigation import NavigationStreamer
 from .os_extensions import file_exists
-from .route_cache import RouteCache, RouteCacheBinary
+from .route_cache import RouteCache, RouteCacheBinary, route_cache_signature
 from .utils import compute_file_hash
 
 from .utils import distance_2d_m
@@ -69,7 +69,7 @@ class GPXStreamer:
     def __init__(self, gpx_path):
         self.gpx_path = gpx_path
         self.route_name = gpx_path.split("/")[-1].replace(".gpx", "")
-        self.bin_path = "cache/routes/" + self.route_name + ".bin"
+        self.bin_path = "/cache/routes/" + self.route_name + ".bin"
 
         # If cache missing or hash mismatch, (re)build it
         if not self.check_route_cache():
@@ -202,7 +202,7 @@ class GPXStreamer:
         try:
             with open(meta_path, "r", encoding="utf-8") as mf:
                 saved_hash = mf.read().strip()
-            current_hash = compute_file_hash(self.gpx_path)
+            current_hash = route_cache_signature(self.gpx_path)
             if saved_hash == current_hash:
                 return True
             else:
@@ -237,7 +237,28 @@ class GPXStreamer:
         
         return self.gpx_pts
 
-
+    def get_route_info(self) -> dict:
+        return {
+            "point_count": self.rcb.n,
+    
+            "distance_m": self.rcb.total_distance_m,
+            "distance_km": (
+                self.rcb.total_distance_m / 1000.0
+            ),
+    
+            "elevation_gain_m": (
+                self.rcb.total_ascent_m
+            ),
+    
+            "min_elevation_m": self.rcb.min_elv,
+            "max_elevation_m": self.rcb.max_elv,
+    
+            "min_lat": self.rcb.min_lat / 1e7,
+            "max_lat": self.rcb.max_lat / 1e7,
+            "min_lon": self.rcb.min_lon / 1e7,
+            "max_lon": self.rcb.max_lon / 1e7,
+        }
+        
 def test_navigation_streamer(gpx_path="routes/arheilgen_to_Barcelona.gpx", step=2):
     """
     Simple test that:

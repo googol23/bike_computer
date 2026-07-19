@@ -2,8 +2,8 @@
 import sys
 import os
 import struct
-from .route_cache import RouteCacheBinary, RouteCache, NAV_HEADER_SIZE, NAV_HEADER_FMT, NAV_RECORD_HDR_SIZE, NAV_RECORD_FMT
-from .utils import distance_2d_m, compute_file_hash
+from .route_cache import RouteCacheBinary, RouteCache, NAV_HEADER_SIZE, NAV_HEADER_FMT, NAV_RECORD_HDR_SIZE, NAV_RECORD_FMT, route_cache_signature
+from .utils import distance_2d_m
 from .os_extensions import file_exists
 class NavigationStreamer:
     """
@@ -59,7 +59,7 @@ class NavigationStreamer:
         try:
             with open(self.meta_path, "r", encoding="utf-8") as mf:
                 saved_hash = mf.read().strip()
-            cur_hash = compute_file_hash(self.gpx_path)
+            cur_hash = route_cache_signature(self.gpx_path)
             return saved_hash == cur_hash
         except Exception:
             return False
